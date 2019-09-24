@@ -7,9 +7,9 @@ DECLARE
     columnNameLength    NUMBER        := 15;
     attributesLength    NUMBER        := 60;
     attributeNameLength NUMBER        := 15;
-    typeName            VARCHAR2(128);
-    commentName         VARCHAR2(128);
-    constraintName      VARCHAR2(128);
+    typeName            VARCHAR2(128) := 'Type:';
+    commentName         VARCHAR2(128) := 'COMMEN:';
+    constraintName      VARCHAR2(128) := 'Constraint:';
 
     CURSOR allColumns IS
         SELECT ALL_TAB_COLUMNS.COLUMN_ID,
@@ -37,9 +37,29 @@ DECLARE
 BEGIN
     DBMS_OUTPUT.PUT_LINE('Таблица: ' || tableName);
     DBMS_OUTPUT.PUT_LINE('');
-    DBMS_OUTPUT.PUT_LINE(RPAD(no, noLength) || ' ' || RPAD(columnName, columnNameLength) || ' ' ||
+    DBMS_OUTPUT.PUT_LINE(RPAD(no, noLength) || ' ' ||
+                         RPAD(columnName, columnNameLength) || ' ' ||
                          RPAD(attributes, attributesLength));
-    DBMS_OUTPUT.PUT_LINE(RPAD('-', noLength, '-') || ' ' || RPAD('-', columnNameLength, '-') || ' ' ||
+    DBMS_OUTPUT.PUT_LINE(RPAD('-', noLength, '-') || ' ' ||
+                         RPAD('-', columnNameLength, '-') || ' ' ||
                          RPAD('-', attributesLength, '-'));
+
+    FOR ROW IN allColumns
+        LOOP
+            DBMS_OUTPUT.PUT_LINE(RPAD(ROW.COLUMN_ID, noLength) || ' ' ||
+                                 RPAD(ROW.COLUMN_NAME, columnNameLength) || ' ' ||
+                                 RPAD(typeName, attributeNameLength) ||
+                                 RPAD(ROW.DATA_TYPE, attributesLength - attributeNameLength));
+            IF ROW.COMMENTS IS NOT NULL THEN
+                DBMS_OUTPUT.PUT_LINE(RPAD(' ', noLength + columnNameLength + 2) ||
+                                     RPAD(commentName, attributeNameLength) ||
+                                     RPAD(ROW.COMMENTS, attributesLength - attributeNameLength));
+            end if;
+
+            FOR ROW IN notNullConstraints
+                LOOP
+
+                end loop;
+        end loop;
 END;
 
