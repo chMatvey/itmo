@@ -10,7 +10,6 @@ DECLARE
     typeName            VARCHAR2(128) := 'Type:';
     commentName         VARCHAR2(128) := 'COMMEN:';
     constraintName      VARCHAR2(128) := 'Constraint:';
-
     CURSOR allColumns IS
         SELECT ALL_TAB_COLUMNS.COLUMN_ID,
                ALL_TAB_COLUMNS.COLUMN_NAME,
@@ -22,17 +21,16 @@ DECLARE
 
         WHERE ALL_TAB_COLUMNS.TABLE_NAME = 'Н_УЧЕНИКИ'
           AND ALL_COL_COMMENTS.TABLE_NAME = 'Н_УЧЕНИКИ';
-
     CURSOR notNullConstraints IS
-        SELECT *
+        SELECT DISTINCT COLUMN_NAME
         FROM ALL_CONSTRAINTS
                  INNER JOIN ALL_CONS_COLUMNS
                             ON ALL_CONSTRAINTS.CONSTRAINT_NAME = ALL_CONS_COLUMNS.CONSTRAINT_NAME
 
         WHERE ALL_CONS_COLUMNS.TABLE_NAME = 'Н_УЧЕНИКИ'
           AND ALL_CONSTRAINTS.TABLE_NAME = 'Н_УЧЕНИКИ'
-          AND (ALL_CONSTRAINTS.CONSTRAINT_TYPE = 'P'
-            OR ALL_CONSTRAINTS.SEARCH_CONDITION IS NOT NULL);
+          AND ALL_CONSTRAINTS.CONSTRAINT_TYPE = 'C'
+          AND ALL_CONSTRAINTS.SEARCH_CONDITION IS NOT NULL;
 
 BEGIN
     DBMS_OUTPUT.PUT_LINE('Таблица: ' || tableName);
@@ -44,22 +42,25 @@ BEGIN
                          RPAD('-', columnNameLength, '-') || ' ' ||
                          RPAD('-', attributesLength, '-'));
 
-    FOR ROW IN allColumns
+    FOR column IN allColumns
         LOOP
-            DBMS_OUTPUT.PUT_LINE(RPAD(ROW.COLUMN_ID, noLength) || ' ' ||
-                                 RPAD(ROW.COLUMN_NAME, columnNameLength) || ' ' ||
+            DBMS_OUTPUT.PUT_LINE(RPAD(column.COLUMN_ID, noLength) || ' ' ||
+                                 RPAD(column.COLUMN_NAME, columnNameLength) || ' ' ||
                                  RPAD(typeName, attributeNameLength) ||
-                                 RPAD(ROW.DATA_TYPE, attributesLength - attributeNameLength));
-            IF ROW.COMMENTS IS NOT NULL THEN
+                                 RPAD(column.DATA_TYPE, attributesLength - attributeNameLength));
+            IF column.COMMENTS IS NOT NULL THEN
                 DBMS_OUTPUT.PUT_LINE(RPAD(' ', noLength + columnNameLength + 2) ||
                                      RPAD(commentName, attributeNameLength) ||
-                                     RPAD(ROW.COMMENTS, attributesLength - attributeNameLength));
+                                     RPAD(column.COMMENTS, attributesLength - attributeNameLength));
             end if;
 
-            FOR ROW IN notNullConstraints
+            FOR constraint IN notNullConstraints
                 LOOP
-
+                    IF (constraint.COLUMN_NAME = column.COLUMN_NAME) THEN
+                        DBMS_OUTPUT.PUT_LINE(RPAD(' ', noLength + columnNameLength + 2) ||
+                                             RPAD(constraintName, attributeNameLength) ||
+                                             RPAD('Not null', attributesLength - attributeNameLength));
+                    end if;
                 end loop;
         end loop;
 END;
-
