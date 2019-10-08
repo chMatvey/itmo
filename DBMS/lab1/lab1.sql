@@ -2,14 +2,23 @@ set verify off;
 set serveroutput ON FORMAT WRAPPED;
 
 DECLARE
-    tableName           VARCHAR2(128) := '&tableName';
-    noLength            NUMBER        := 3;
-    columnNameLength    NUMBER        := 15;
-    attributesLength    NUMBER        := 60;
-    attributeNameLength NUMBER        := 15;
-    tableExists         NUMBER        := 0;
-    tableReached        NUMBER        := 0;
-
+    --inputString            VARCHAR2(128) := '&tableName';
+    inputString             VARCHAR2(128) := 'S225141.POINT';
+    tableName               VARCHAR2(128) := '';
+    schemaName              VARCHAR2(128) := '';
+    inputStringLength       NUMBER        := 0;
+    tableNameLength         NUMBER        := 0;
+    schemaNameLength        NUMBER        := 0;
+    pointPosition           NUMBER        := 0;
+    noLength                NUMBER        := 3;
+    columnNameLength        NUMBER        := 15;
+    attributesLength        NUMBER        := 60;
+    attributeNameLength     NUMBER        := 15;
+    tableExists             NUMBER        := 0;
+    tableReached            NUMBER        := 0;
+    isCorrectTableName      BOOLEAN       := TRUE;
+    isCorrectSchemaName     BOOLEAN       := TRUE;
+    tableAndSchemaNameRegex VARCHAR2(128) := '^[A-Za-zА-Яа-я][A-Za-zА-Яа-я0-9_$#.]*$';
     CURSOR allColumns IS
         SELECT ALL_TAB_COLUMNS.COLUMN_ID,
                ALL_TAB_COLUMNS.COLUMN_NAME,
@@ -20,7 +29,6 @@ DECLARE
                             ON ALL_TAB_COLUMNS.COLUMN_NAME = ALL_COL_COMMENTS.COLUMN_NAME
         WHERE ALL_TAB_COLUMNS.TABLE_NAME = tableName
           AND ALL_COL_COMMENTS.TABLE_NAME = tableName;
-
     CURSOR notNullConstraints IS
         SELECT DISTINCT COLUMN_NAME
         FROM ALL_CONSTRAINTS
@@ -31,18 +39,50 @@ DECLARE
           AND ALL_CONSTRAINTS.CONSTRAINT_TYPE = 'C'
           AND ALL_CONSTRAINTS.SEARCH_CONDITION IS NOT NULL;
 
-BEGIN
-    IF (REGEXP_LIKE(tableName, ))
+    FUNCTION getAllColumns()
+        return array
+        PIPELINED
 
-    SELECT COUNT(*) INTO tableExists
+BEGIN
+    pointPosition := INSTR(inputString, '.');
+
+    IF pointPosition != 0 THEN
+        tableName := SUBSTR(inputString, pointPosition + 1);
+
+        inputStringLength := LENGTH(inputString);
+        tableNameLength := LENGTH(tableName);
+        schemaNameLength := inputStringLength - tableNameLength;
+
+        schemaName := SUBSTR(inputString, 1, schemaNameLength - 1);
+        isCorrectSchemaName := REGEXP_LIKE(schemaName, tableAndSchemaNameRegex);
+    ELSE
+        tableName := inputString;
+    end if;
+
+    schemaNameLength := LENGTH(schemaNameLength);
+
+    DBMS_OUTPUT.PUT_LINE(tableName);
+    DBMS_OUTPUT.PUT_LINE(schemaName);
+
+    SELECT COUNT(*)
+    INTO tableExists
     FROM dba_tables
     WHERE TABLE_NAME = tableName;
 
-    SELECT COUNT(*) INTO tableReached
+    SELECT COUNT(*)
+    INTO tableReached
     FROM all_tables
     WHERE TABLE_NAME = tableName;
 
-    IF tableExists = 0 THEN
+    isCorrectTableName := REGEXP_LIKE(tableName, tableAndSchemaNameRegex);
+
+    IF NOT isCorrectTableName AND NOT isCorrectSchemaName THEN
+        DBMS_OUTPUT.PUT_LINE('Имя таблицы и имя схемы не корректны');
+    ELSIF NOT isCorrectTableName THEN
+        DBMS_OUTPUT.PUT_LINE('Имя таблицы не корректно');
+    ELSIF NOT isCorrectSchemaName THEN
+        DBMS_OUTPUT.PUT_LINE('Имя схемы не корректно');
+    ELSIF tableExists = 0 THEN
         DBMS_OUTPUT.PUT_LINE('Таблица не существует ' || tableName);
     ELSIF tableReached = 0 THEN
         DBMS_OUTPUT.PUT_LINE('У вас нет доступа к таблице ' || tableName);
