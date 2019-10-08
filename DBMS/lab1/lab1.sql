@@ -3,9 +3,9 @@ set serveroutput ON FORMAT WRAPPED;
 
 DECLARE
     --inputString            VARCHAR2(128) := '&tableName';
-    inputString             VARCHAR2(128) := 'S225141.POINT';
+    inputString             VARCHAR2(128) := 'н_ученики';
     tableName               VARCHAR2(128) := '';
-    schemaName              VARCHAR2(128) := '';
+    schemaName              VARCHAR2(128) := null;
     inputStringLength       NUMBER        := 0;
     tableNameLength         NUMBER        := 0;
     schemaNameLength        NUMBER        := 0;
@@ -19,29 +19,49 @@ DECLARE
     isCorrectTableName      BOOLEAN       := TRUE;
     isCorrectSchemaName     BOOLEAN       := TRUE;
     tableAndSchemaNameRegex VARCHAR2(128) := '^[A-Za-zА-Яа-я][A-Za-zА-Яа-я0-9_$#.]*$';
-    CURSOR allColumns IS
-        SELECT ALL_TAB_COLUMNS.COLUMN_ID,
-               ALL_TAB_COLUMNS.COLUMN_NAME,
-               ALL_TAB_COLUMNS.DATA_TYPE,
-               ALL_COL_COMMENTS.COMMENTS
-        FROM ALL_TAB_COLUMNS
-                 INNER JOIN ALL_COL_COMMENTS
-                            ON ALL_TAB_COLUMNS.COLUMN_NAME = ALL_COL_COMMENTS.COLUMN_NAME
-        WHERE ALL_TAB_COLUMNS.TABLE_NAME = tableName
-          AND ALL_COL_COMMENTS.TABLE_NAME = tableName;
+    columnId                ALL_TAB_COLUMNS.COLUMN_ID%TYPE;
+    columnName              ALL_TAB_COLUMNS.COLUMN_NAME%TYPE;
+    columnDataType          ALL_TAB_COLUMNS.DATA_TYPE%TYPE;
+    columnComment           ALL_COL_COMMENTS.COMMENTS%TYPE;
+    allColumnsCursor        SYS_REFCURSOR;
     CURSOR notNullConstraints IS
         SELECT DISTINCT COLUMN_NAME
         FROM ALL_CONSTRAINTS
                  INNER JOIN ALL_CONS_COLUMNS
                             ON ALL_CONSTRAINTS.CONSTRAINT_NAME = ALL_CONS_COLUMNS.CONSTRAINT_NAME
-        WHERE ALL_CONS_COLUMNS.TABLE_NAME = tableName
-          AND ALL_CONSTRAINTS.TABLE_NAME = tableName
+        WHERE UPPER(ALL_CONS_COLUMNS.TABLE_NAME) = UPPER(tableName)
+          AND UPPER(ALL_CONSTRAINTS.TABLE_NAME) = UPPER(tableName)
           AND ALL_CONSTRAINTS.CONSTRAINT_TYPE = 'C'
           AND ALL_CONSTRAINTS.SEARCH_CONDITION IS NOT NULL;
 
-    FUNCTION getAllColumns()
-        return array
-        PIPELINED
+    PROCEDURE getColumnByTable(allColumns OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN allColumns FOR
+            SELECT ALL_TAB_COLUMNS.COLUMN_ID,
+                   ALL_TAB_COLUMNS.COLUMN_NAME,
+                   ALL_TAB_COLUMNS.DATA_TYPE,
+                   ALL_COL_COMMENTS.COMMENTS
+            FROM ALL_TAB_COLUMNS
+                     INNER JOIN ALL_COL_COMMENTS
+                                ON ALL_TAB_COLUMNS.COLUMN_NAME = ALL_COL_COMMENTS.COLUMN_NAME
+            WHERE UPPER(ALL_TAB_COLUMNS.TABLE_NAME) = UPPER(tableName)
+              AND UPPER(ALL_COL_COMMENTS.TABLE_NAME) = UPPER(tableName);
+    END;
+
+    PROCEDURE getColumnByTableAndSchema(allColumns OUT SYS_REFCURSOR) IS
+    BEGIN
+        OPEN allColumns FOR
+            SELECT ALL_TAB_COLUMNS.COLUMN_ID,
+                   ALL_TAB_COLUMNS.COLUMN_NAME,
+                   ALL_TAB_COLUMNS.DATA_TYPE,
+                   ALL_COL_COMMENTS.COMMENTS
+            FROM ALL_TAB_COLUMNS
+                     INNER JOIN ALL_COL_COMMENTS
+                                ON ALL_TAB_COLUMNS.COLUMN_NAME = ALL_COL_COMMENTS.COLUMN_NAME
+            WHERE UPPER(ALL_TAB_COLUMNS.TABLE_NAME) = UPPER(tableName)
+              AND UPPER(ALL_COL_COMMENTS.TABLE_NAME) = UPPER(tableName)
+              AND UPPER(ALL_TAB_COLUMNS.OWNER) = UPPER(schemaName);
+    END;
 
 BEGIN
     pointPosition := INSTR(inputString, '.');
@@ -55,24 +75,31 @@ BEGIN
 
         schemaName := SUBSTR(inputString, 1, schemaNameLength - 1);
         isCorrectSchemaName := REGEXP_LIKE(schemaName, tableAndSchemaNameRegex);
+
+        SELECT COUNT(*)
+        INTO tableExists
+        FROM dba_tables
+        WHERE UPPER(TABLE_NAME) = UPPER(tableName)
+          AND UPPER(OWNER) = UPPER(schemaName);
+
+        SELECT COUNT(*)
+        INTO tableReached
+        FROM all_tables
+        WHERE UPPER(TABLE_NAME) = UPPER(tableName)
+          AND UPPER(OWNER) = UPPER(schemaName);
     ELSE
         tableName := inputString;
+
+        SELECT COUNT(*)
+        INTO tableExists
+        FROM dba_tables
+        WHERE UPPER(TABLE_NAME) = UPPER(tableName);
+
+        SELECT COUNT(*)
+        INTO tableReached
+        FROM all_tables
+        WHERE UPPER(TABLE_NAME) = UPPER(tableName);
     end if;
-
-    schemaNameLength := LENGTH(schemaNameLength);
-
-    DBMS_OUTPUT.PUT_LINE(tableName);
-    DBMS_OUTPUT.PUT_LINE(schemaName);
-
-    SELECT COUNT(*)
-    INTO tableExists
-    FROM dba_tables
-    WHERE TABLE_NAME = tableName;
-
-    SELECT COUNT(*)
-    INTO tableReached
-    FROM all_tables
-    WHERE TABLE_NAME = tableName;
 
     isCorrectTableName := REGEXP_LIKE(tableName, tableAndSchemaNameRegex);
 
@@ -83,11 +110,32 @@ BEGIN
     ELSIF NOT isCorrectSchemaName THEN
         DBMS_OUTPUT.PUT_LINE('Имя схемы не корректно');
     ELSIF tableExists = 0 THEN
-        DBMS_OUTPUT.PUT_LINE('Таблица не существует ' || tableName);
+        DBMS_OUTPUT.PUT_LINE('Таблица не существует ' || inputString);
     ELSIF tableReached = 0 THEN
-        DBMS_OUTPUT.PUT_LINE('У вас нет доступа к таблице ' || tableName);
+        DBMS_OUTPUT.PUT_LINE('У вас нет доступа к таблице ' || inputString);
     ELSE
-        DBMS_OUTPUT.PUT_LINE('Таблица: ' || tableName);
+        IF schemaName IS NULL THEN
+            SELECT TABLE_NAME
+            INTO inputString
+            FROM ALL_TAB_COLUMNS
+            WHERE UPPER(TABLE_NAME) = UPPER(tableName)
+            AND ROWNUM = 1;
+
+            getColumnByTable(allColumnsCursor);
+        ELSE
+            SELECT TABLE_NAME, OWNER
+            INTO tableName, schemaName
+            FROM ALL_TAB_COLUMNS
+            WHERE UPPER(TABLE_NAME) = UPPER(tableName)
+            AND UPPER(OWNER) = UPPER(schemaName)
+            AND ROWNUM = 1;
+
+            inputString := UTL_LMS.FORMAT_MESSAGE('%s.%s', schemaName, tableName);
+
+            getColumnByTableAndSchema(allColumnsCursor);
+        end if;
+
+        DBMS_OUTPUT.PUT_LINE('Таблица: ' || inputString);
         DBMS_OUTPUT.PUT_LINE('');
         DBMS_OUTPUT.PUT_LINE(RPAD('No.', noLength) || ' ' ||
                              RPAD('Имя столбца', columnNameLength) || ' ' ||
@@ -96,27 +144,30 @@ BEGIN
                              RPAD('-', columnNameLength, '-') || ' ' ||
                              RPAD('-', attributesLength, '-'));
 
-        FOR column IN allColumns
-            LOOP
-                DBMS_OUTPUT.PUT_LINE(RPAD(column.COLUMN_ID, noLength) || ' ' ||
-                                     RPAD(column.COLUMN_NAME, columnNameLength) || ' ' ||
-                                     RPAD('Type:', attributeNameLength) ||
-                                     RPAD(column.DATA_TYPE, attributesLength - attributeNameLength));
-                IF column.COMMENTS IS NOT NULL THEN
-                    DBMS_OUTPUT.PUT_LINE(RPAD(' ', noLength + columnNameLength + 2) ||
-                                         RPAD('COMMEN:', attributeNameLength) ||
-                                         RPAD(column.COMMENTS, attributesLength - attributeNameLength));
-                end if;
+        LOOP
+            FETCH allColumnsCursor
+                INTO columnId, columnName, columnDataType, columnComment;
+            EXIT WHEN allColumnsCursor%NOTFOUND;
 
-                FOR constraint IN notNullConstraints
-                    LOOP
-                        IF (constraint.COLUMN_NAME = column.COLUMN_NAME) THEN
-                            DBMS_OUTPUT.PUT_LINE(RPAD(' ', noLength + columnNameLength + 2) ||
-                                                 RPAD('Constraint:', attributeNameLength) ||
-                                                 RPAD('Not null', attributesLength - attributeNameLength));
-                        end if;
-                    end loop;
-            end loop;
+            DBMS_OUTPUT.PUT_LINE(RPAD(columnId, noLength) || ' ' ||
+                                 RPAD(columnName, columnNameLength) || ' ' ||
+                                 RPAD('Type:', attributeNameLength) ||
+                                 RPAD(columnDataType, attributesLength - attributeNameLength));
+            IF columnComment IS NOT NULL THEN
+                DBMS_OUTPUT.PUT_LINE(RPAD(' ', noLength + columnNameLength + 2) ||
+                                     RPAD('COMMEN:', attributeNameLength) ||
+                                     RPAD(columnComment, attributesLength - attributeNameLength));
+            end if;
+
+            FOR constraint IN notNullConstraints
+                LOOP
+                    IF (constraint.COLUMN_NAME = columnName) THEN
+                        DBMS_OUTPUT.PUT_LINE(RPAD(' ', noLength + columnNameLength + 2) ||
+                                             RPAD('Constraint:', attributeNameLength) ||
+                                             RPAD('Not null', attributesLength - attributeNameLength));
+                    end if;
+                end loop;
+        end loop;
     end if;
-END;
+END ;
 /
