@@ -1,9 +1,9 @@
 set verify off;
-set serveroutput ON FORMAT WRAPPED;
+set serveroutput ON;
 
 DECLARE
-    --inputString            VARCHAR2(128) := '&tableName';
-    inputString             VARCHAR2(128) := 'н_ученики';
+    inputString            VARCHAR2(128) := '&tableName';
+    --inputString             VARCHAR2(128) := 's225141.point';
     tableName               VARCHAR2(128) := '';
     schemaName              VARCHAR2(128) := null;
     inputStringLength       NUMBER        := 0;
@@ -29,8 +29,8 @@ DECLARE
         FROM ALL_CONSTRAINTS
                  INNER JOIN ALL_CONS_COLUMNS
                             ON ALL_CONSTRAINTS.CONSTRAINT_NAME = ALL_CONS_COLUMNS.CONSTRAINT_NAME
-        WHERE UPPER(ALL_CONS_COLUMNS.TABLE_NAME) = UPPER(tableName)
-          AND UPPER(ALL_CONSTRAINTS.TABLE_NAME) = UPPER(tableName)
+        WHERE ALL_CONS_COLUMNS.TABLE_NAME = tableName
+          AND ALL_CONSTRAINTS.TABLE_NAME = tableName
           AND ALL_CONSTRAINTS.CONSTRAINT_TYPE = 'C'
           AND ALL_CONSTRAINTS.SEARCH_CONDITION IS NOT NULL;
 
@@ -44,8 +44,8 @@ DECLARE
             FROM ALL_TAB_COLUMNS
                      INNER JOIN ALL_COL_COMMENTS
                                 ON ALL_TAB_COLUMNS.COLUMN_NAME = ALL_COL_COMMENTS.COLUMN_NAME
-            WHERE UPPER(ALL_TAB_COLUMNS.TABLE_NAME) = UPPER(tableName)
-              AND UPPER(ALL_COL_COMMENTS.TABLE_NAME) = UPPER(tableName);
+            WHERE ALL_TAB_COLUMNS.TABLE_NAME = tableName
+              AND ALL_COL_COMMENTS.TABLE_NAME = tableName;
     END;
 
     PROCEDURE getColumnByTableAndSchema(allColumns OUT SYS_REFCURSOR) IS
@@ -58,9 +58,9 @@ DECLARE
             FROM ALL_TAB_COLUMNS
                      INNER JOIN ALL_COL_COMMENTS
                                 ON ALL_TAB_COLUMNS.COLUMN_NAME = ALL_COL_COMMENTS.COLUMN_NAME
-            WHERE UPPER(ALL_TAB_COLUMNS.TABLE_NAME) = UPPER(tableName)
-              AND UPPER(ALL_COL_COMMENTS.TABLE_NAME) = UPPER(tableName)
-              AND UPPER(ALL_TAB_COLUMNS.OWNER) = UPPER(schemaName);
+            WHERE ALL_TAB_COLUMNS.TABLE_NAME = tableName
+              AND ALL_COL_COMMENTS.TABLE_NAME = tableName
+              AND ALL_TAB_COLUMNS.OWNER = schemaName;
     END;
 
 BEGIN
@@ -76,29 +76,42 @@ BEGIN
         schemaName := SUBSTR(inputString, 1, schemaNameLength - 1);
         isCorrectSchemaName := REGEXP_LIKE(schemaName, tableAndSchemaNameRegex);
 
+        SELECT TABLE_NAME, OWNER
+            INTO tableName, schemaName
+            FROM ALL_TAB_COLUMNS
+            WHERE UPPER(TABLE_NAME) = UPPER(tableName)
+            AND UPPER(OWNER) = UPPER(schemaName)
+            AND ROWNUM = 1;
+
         SELECT COUNT(*)
         INTO tableExists
         FROM dba_tables
-        WHERE UPPER(TABLE_NAME) = UPPER(tableName)
-          AND UPPER(OWNER) = UPPER(schemaName);
+        WHERE TABLE_NAME = tableName
+          AND OWNER = schemaName;
 
         SELECT COUNT(*)
         INTO tableReached
         FROM all_tables
-        WHERE UPPER(TABLE_NAME) = UPPER(tableName)
-          AND UPPER(OWNER) = UPPER(schemaName);
+        WHERE TABLE_NAME = tableName
+          AND OWNER = schemaName;
     ELSE
+        SELECT TABLE_NAME
+        INTO inputString
+        FROM ALL_TAB_COLUMNS
+        WHERE UPPER(TABLE_NAME) = UPPER(inputString)
+          AND ROWNUM = 1;
+
         tableName := inputString;
 
         SELECT COUNT(*)
         INTO tableExists
         FROM dba_tables
-        WHERE UPPER(TABLE_NAME) = UPPER(tableName);
+        WHERE TABLE_NAME = tableName;
 
         SELECT COUNT(*)
         INTO tableReached
         FROM all_tables
-        WHERE UPPER(TABLE_NAME) = UPPER(tableName);
+        WHERE TABLE_NAME = tableName;
     end if;
 
     isCorrectTableName := REGEXP_LIKE(tableName, tableAndSchemaNameRegex);
@@ -118,17 +131,17 @@ BEGIN
             SELECT TABLE_NAME
             INTO inputString
             FROM ALL_TAB_COLUMNS
-            WHERE UPPER(TABLE_NAME) = UPPER(tableName)
-            AND ROWNUM = 1;
+            WHERE TABLE_NAME = tableName
+              AND ROWNUM = 1;
 
             getColumnByTable(allColumnsCursor);
         ELSE
             SELECT TABLE_NAME, OWNER
             INTO tableName, schemaName
             FROM ALL_TAB_COLUMNS
-            WHERE UPPER(TABLE_NAME) = UPPER(tableName)
-            AND UPPER(OWNER) = UPPER(schemaName)
-            AND ROWNUM = 1;
+            WHERE TABLE_NAME = tableName
+              AND OWNER = schemaName
+              AND ROWNUM = 1;
 
             inputString := UTL_LMS.FORMAT_MESSAGE('%s.%s', schemaName, tableName);
 
