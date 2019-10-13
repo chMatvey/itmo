@@ -2,13 +2,9 @@ package ru.chudakov;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 class Lab2Test {
 
@@ -33,16 +29,30 @@ class Lab2Test {
     }
 
     @Test
-    void task3() throws IOException {
-//        BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
-//        String lines = br.readLine();
-//
-//        String[] variables = lines.trim().split("\\s+");
-
+    void task3() {
         String[] variables = "один два два три два".trim().split("\\s+");
+        HashMap<String, Integer> hashMap = new HashMap<>(variables.length);
+        boolean isAllDifferent = true;
 
-        List<String> list = new ArrayList<>(Arrays.asList(variables));
+        for (String variable : variables) {
+            if (hashMap.containsKey(variable)) {
+                isAllDifferent = false;
+                hashMap.put(variable, hashMap.get(variable) + 1);
+            } else {
+                hashMap.put(variable, 1);
+            }
+        }
 
-        System.out.println();
+        for (Map.Entry<String, Integer> entry : hashMap.entrySet()) {
+            if (entry.getValue() == 1 && isAllDifferent) {
+                System.out.println(entry.getKey());
+            } else {
+                int count = entry.getValue();
+                while (count > 0) {
+                    System.out.println(entry.getKey());
+                    count--;
+                }
+            }
+        }
     }
 }
