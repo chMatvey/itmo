@@ -2,8 +2,8 @@ set verify off;
 set serveroutput ON;
 
 DECLARE
-    inputString            VARCHAR2(128) := '&tableName';
-    --inputString             VARCHAR2(128) := 's225141.point';
+    --inputString            VARCHAR2(128) := '&tableName';
+    inputString             VARCHAR2(128) := 's225141.point';
     tableName               VARCHAR2(128) := '';
     schemaName              VARCHAR2(128) := null;
     inputStringLength       NUMBER        := 0;
