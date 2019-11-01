@@ -6,22 +6,9 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <malloc.h>
-
-int isRegularFile(const char *path) {
-    struct stat statBuffer;
-    if (stat(path, &statBuffer) != 0)
-        return 0;
-
-    return S_ISREG(statBuffer.st_mode);
-}
-
-int isDirectory(const char *path) {
-    struct stat statBuffer;
-    if (stat(path, &statBuffer) != 0)
-        return 0;
-
-    return S_ISDIR(statBuffer.st_mode);
-}
+#include <string.h>
+#include <dirent.h>
+#include "errno.h"
 
 const char *concatenate(const char *first, const char *second) {
     int firstLength = 0;
@@ -46,75 +33,234 @@ const char *concatenate(const char *first, const char *second) {
     }
     str[length] = '\0';
 
-    const char *result = (char *) malloc(length + 1);
+    const char *result = malloc(length + 1);
     if (result == NULL) return NULL;
     result = &str[0];
 
     return result;
 }
 
-int main(int argc, char *argv[]) {
-    char buf;
-    int sourceFile, destFile;
+int length(const char *str) {
+    int result = 0;
+    while (str[result] != '\0') {
+        result++;
+    }
 
-    if (argc < 3) {
-        write(STDOUT_FILENO, "prgm1 <sourcefile> [flags] <destination file>\n", 50);
-        exit(1);
-    } else {
-        const char *sourceFileName = argv[1];
+    return result;
+}
 
-        sourceFile = open(sourceFileName, O_RDONLY);
+int isRegularFile(const char *path) {
+    struct stat statBuffer;
+    if (stat(path, &statBuffer) != 0)
+        return 0;
 
-        if (sourceFile == -1) {
-            perror("SOURCE FILE ERROR");
-            exit(0);
-        } else {
-            const char *dest = argv[2];
+    return S_ISREG(statBuffer.st_mode);
+}
 
-            if (isDirectory(dest)) {
-                int lastIndexSlash = 0;
-                int sourceFileNameLength = 0;
+int isDirectory(const char *path) {
+    struct stat statBuffer;
+    if (stat(path, &statBuffer) != 0)
+        return 0;
 
-                while (sourceFileName[sourceFileNameLength] != '\0') {
-                    if (sourceFileName[sourceFileNameLength] == '/') {
-                        lastIndexSlash = sourceFileNameLength;
-                    }
-                    sourceFileNameLength++;
+    return S_ISDIR(statBuffer.st_mode);
+}
+
+int hasFlag(int flagCount, char *flags[], const char *flag) {
+    for (int i = 0; i < flagCount; i++) {
+        if (strcmp(flags[i], flag) == 0) return 1;
+    }
+
+    return 0;
+}
+
+typedef struct node {
+    char *value;
+    struct node *next;
+} node_t;
+
+void add(node_t **head, char *value) {
+    node_t *tmp = malloc(sizeof(node_t));
+    tmp->value = strdup(value);
+    tmp->next = (*head);
+    (*head) = tmp;
+}
+
+struct sourceFiles {
+    int size;
+    node_t *names;
+    node_t *fullNames;
+};
+
+void getSourceFiles(struct sourceFiles *result, char *sourceName) {
+    if (isDirectory(sourceName)) {
+        DIR *dir = opendir(sourceName);
+        struct dirent *entry;
+        size_t dirLength = strlen(sourceName);
+
+        while ((entry = readdir(dir)) != NULL) {
+            char *fileName = entry->d_name;
+            char *fullName = malloc(dirLength + strlen(fileName) + 1);
+            strcpy(fullName, sourceName);
+            strcat(fullName, "/");
+            strcat(fullName, fileName);
+
+            if (strcmp(fileName, ".") != 0 && strcmp(fileName, "..") != 0) {
+                if (isDirectory(fullName)) {
+                    getSourceFiles(result, fullName);
+                } else {
+                    add(&result->names, fileName);
+                    add(&result->fullNames, fullName);
+                    result->size++;
                 }
-
-                int fileNameLength = sourceFileNameLength - lastIndexSlash;
-
-                char name[fileNameLength + 1];
-                for (int i = lastIndexSlash; i < sourceFileNameLength; i++) {
-                    name[i - lastIndexSlash] = sourceFileName[i];
-                }
-                name[fileNameLength] = '\0';
-
-                const char *fileName = (char *) malloc(fileNameLength + 1);
-                fileName = &name[0];
-
-                const char *destFileName = concatenate(dest, fileName);
-
-                if (destFileName == NULL) exit(1);
-
-                destFile = open(destFileName, O_WRONLY | O_CREAT, 0641);
-            } else {
-                destFile = open(dest, O_WRONLY | O_CREAT, 0641);
             }
 
-            if (destFile == -1) {
-                perror("DESTINATION FILE ERROR");
-                exit(0);
-            } else {
-                while ((read(sourceFile, &buf, 1)) != 0) {
-                    write(destFile, &buf, 1);
-                }
-                write(STDOUT_FILENO, "FILES COPIED\n", 15);
+            free(fullName);
+        }
 
-                close(sourceFile);
-                close(destFile);
+        closedir(dir);
+        free(entry);
+    } else if (isRegularFile(sourceName)) {
+        int lastIndexSlash = 0;
+        int sourceLength = 0;
+
+        while (sourceName[sourceLength] != '\0') {
+            if (sourceName[sourceLength] == '/') {
+                lastIndexSlash = sourceLength;
+            }
+            sourceLength++;
+        }
+
+        int fileNameLength = sourceLength - lastIndexSlash;
+        int directoryNameLength = sourceLength - fileNameLength;
+
+        char *fileName = malloc(fileNameLength);
+        char *directoryName = malloc(directoryNameLength);
+
+        for (int i = 0; i < sourceLength; i++) {
+            if (i < lastIndexSlash) {
+                directoryName[i] = sourceName[i];
+            } else {
+                fileName[i - lastIndexSlash] = sourceName[i];
             }
         }
+
+        add(&result->names, fileName);
+        add(&result->fullNames, sourceName);
+        result->size = 1;
+
+        free(fileName);
+        free(directoryName);
+    }
+}
+
+void printError(char *buf) {
+    write(STDOUT_FILENO, buf, 50);
+}
+
+void printSystemError(char *filePath) {
+    char *msg;
+    if (errno == EPERM) {
+        msg = "You don't have permisson to change group for file\n";
+    } else if (errno == ENOENT) {
+        msg = "Specified file does not exist\n";
+    } else if (errno == ENOTDIR)
+        msg = "Specified filePath is not correct\n";
+    else if (errno == EACCES)
+        msg = "You don't have permisson on one of the directories, where the searched file is hold\n";
+    else {
+        msg = "System error\n";
+    }
+
+    write(STDOUT_FILENO, msg, strlen(msg));
+    write(STDOUT_FILENO, filePath, strlen(filePath));
+}
+
+int main(int argc, char *argv[]) {
+    if (argc < 3) {
+        printError("Arguments must be: [flags] <sourcefile> <destination file>\n");
+        exit(1);
+    } else {
+        int countFlags = argc - 3;
+        char *flags[countFlags];
+        for (int i = 0; i < countFlags; i++) {
+            flags[i] = argv[i + 1];
+        }
+
+        char *sourceName = argv[1 + countFlags];
+
+        if (!hasFlag(countFlags, flags, "-r") && isDirectory(sourceName)) {
+            printError("Error: -r not specified; omitting directory");
+            exit(0);
+        }
+
+        struct sourceFiles sources;
+        sources.size = 0;
+        sources.names = NULL;
+        sources.fullNames = NULL;
+        getSourceFiles(&sources, sourceName);
+
+        int size = sources.size;
+        if (size == 0) {
+            printSystemError(sourceName);
+            exit(0);
+        }
+
+        node_t *names;
+        node_t *fullNames = sources.fullNames;
+        char *destNames[size];
+
+        char *dest = argv[2 + countFlags];
+
+        if (isDirectory(dest)) {
+            size_t destLength = strlen(dest);
+            names = sources.names;
+
+            for (int i = 0; i < size; i++) {
+                const char *fileName = names->value;
+                char *destFileName = NULL;
+                destFileName = malloc(sizeof(char) * (destLength + strlen(fileName) + 1));
+
+                strcpy(destFileName, dest);
+                strcat(destFileName, "/");
+                strcat(destFileName, fileName);
+
+                destNames[i] = strdup(destFileName);
+                free(destFileName);
+
+                names = names->next;
+            }
+        } else {
+            if (size > 1) {
+                printError("Cannot overwrite non-directory\n");
+                printSystemError(dest);
+                exit(0);
+            }
+            if (!isRegularFile(dest)) {
+                printSystemError(dest);
+                exit(0);
+            }
+            destNames[0] = strdup(dest);
+        }
+
+        char buf;
+        int sourceFile;
+        int destFile;
+
+        fullNames = sources.fullNames;
+
+        for (int i = 0; i < size; i++) {
+            sourceFile = open(fullNames->value, O_RDONLY);
+            destFile = open(destNames[i], O_WRONLY | O_CREAT, 0641);
+
+            while ((read(sourceFile, &buf, 1)) != 0) {
+                write(destFile, &buf, 1);
+            }
+
+            close(sourceFile);
+            close(destFile);
+        }
+
+        write(STDOUT_FILENO, "FILES COPIED\n", 15);
     }
 
     return 0;
