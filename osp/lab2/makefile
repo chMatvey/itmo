@@ -8,3 +8,6 @@ main.o: main.c
 
 clean:
 	rm -rf *.o chgroup
+
+flags:
+	gcc -Wall -Wextra -std=gnu99 -pedantic -Werror main.c
