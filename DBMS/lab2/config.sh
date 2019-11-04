@@ -24,3 +24,8 @@ export ORADATA=/u01/yak27/oradata
 
 cd $ORACLE_HOME/dbs
 touch inits225141.ora
+
+cd $ORACLE_HOME/network/admin
+touch listener.ora
+touch sqlnet.ora
+touch tnsnames.ora
