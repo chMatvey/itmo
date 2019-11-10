@@ -1,4 +1,4 @@
-package ru.chudakov.lab5_chudakov.home;
+package ru.chudakov.lab5_chudakov.cloud;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -11,11 +11,11 @@ import androidx.fragment.app.Fragment;
 
 import ru.chudakov.lab5_chudakov.R;
 
-public class HomeFragment extends Fragment {
+public class CloudFragment extends Fragment {
 
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.fragment_home, container, false);
+        return inflater.inflate(R.layout.fragment_cloud, container, false);
     }
 }

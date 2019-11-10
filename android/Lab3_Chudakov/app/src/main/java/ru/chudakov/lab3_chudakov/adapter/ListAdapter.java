@@ -9,6 +9,7 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.squareup.picasso.Picasso;
+import com.squareup.picasso.RequestCreator;
 
 import java.io.IOException;
 import java.util.List;
@@ -39,7 +40,8 @@ public class ListAdapter extends RecyclerView.Adapter<ListAdapter.ListHolder>  {
     @Override
     public void onBindViewHolder(@NonNull ListHolder listHolder, int i) {
         Item itemList = items.get(i);
-        Picasso.get().load(itemList.getImageSrc()).into(listHolder.image);
+        RequestCreator req = Picasso.get().load(itemList.getImageSrc());
+        req.into(listHolder.image);
     }
 
     @Override

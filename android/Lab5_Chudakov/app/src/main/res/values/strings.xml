@@ -2,8 +2,12 @@
 <resources>
     <string name="app_name">Lab5_Chudakov</string>
     <string name="lab">Lab 5</string>
-    <string name="menu_recycler_view">RecyclerView</string>
     <string name="menu_home">Home</string>
-    <string name="menu_card_view">CardView</string>
+    <string name="menu_recycler_view">Recycler view</string>
     <string name="menu_github">Github</string>
+    <string name="menu_calendar">Calendar</string>
+    <string name="menu_cloud">Cloud</string>
+    <string name="menu_bitcoin">Bitcoin</string>
+    <string name="github_link">https://github.com/chMatvey</string>
+    <string name="todo">TODO</string>
 </resources>
