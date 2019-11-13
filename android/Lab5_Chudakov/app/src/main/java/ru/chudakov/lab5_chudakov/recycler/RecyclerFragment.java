@@ -4,15 +4,18 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.recyclerview.widget.StaggeredGridLayoutManager;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 import ru.chudakov.lab5_chudakov.R;
 import ru.chudakov.lab5_chudakov.recycler.adapter.ListAdapter;
@@ -23,6 +26,9 @@ public class RecyclerFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        TextView title = ((AppCompatActivity) Objects.requireNonNull(getActivity())).findViewById(R.id.toolbar_title);
+        title.setText(R.string.menu_recycler_view);
+
         View root = inflater.inflate(R.layout.fragment_recycler, container, false);
 
         RecyclerView.Adapter adapter = new ListAdapter(getPersons());
