@@ -144,24 +144,34 @@ int main() {
 
     read_csv(filename, data);
 
+    if (numberCount < 4) {
+        return 1;
+    }
+
+    TMessage *messageFibonacci = (TMessage *) malloc(sizeof(TMessage));
+    messageFibonacci->type = FIBONACCI;
+    messageFibonacci->size = 1;
+    messageFibonacci->data = (uint8_t *) malloc(messageFibonacci->size * sizeof(uint8_t));
+    messageFibonacci->data[0] = data[0];
+
+    TMessage *messagePow = (TMessage *) malloc(sizeof(TMessage));
+    messagePow->type = POW;
+    messageFibonacci->size = 2;
+    messageFibonacci->data = (uint8_t *) malloc(messageFibonacci->size * sizeof(uint8_t));
+    messageFibonacci->data[0] = data[1];
+    messageFibonacci->data[1] = data[2];
+
     pthread_t tid; /* идентификатор потока */
     pthread_attr_t attr; /* отрибуты потока */
 
-    TMessage *message = (TMessage *) malloc(sizeof(TMessage));
-    message->type = BUBBLE_SORT_UINT64;
-    message->size = 4;
-    message->data = (uint8_t *) malloc(message->size * sizeof(uint8_t));
-    message->data[0] = 12;
-    message->data[1] = 2;
-    message->data[2] = 13;
-    message->data[3] = 1;
-
     pthread_attr_init(&attr);
-    pthread_create(&tid, &attr, per_thread, message);
+    pthread_create(&tid, &attr, per_thread, messageFibonacci);
 
     pthread_join(tid, NULL);
 
     free(data);
-    free(message->data);
-    free(message);
+    free(messageFibonacci->data);
+    free(messageFibonacci);
+    free(messagePow->data);
+    free(messagePow);
 }
