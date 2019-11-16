@@ -1,11 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
 #include <stdint.h>
-#include <math.h>
 #include <malloc.h>
 #include <string.h>
-#include <sys/stat.h>
+#include <unistd.h>
+#include <pthread.h>
+#include "cJSON/cJSON.h"
+#include "cJSON/cJSON.c"
 
 typedef enum {
     FIBONACCI,
@@ -33,16 +34,8 @@ void advancedPrint(char *str) {
     }
 }
 
-void readThread() {
-
-}
-
-void writeThread() {
-
-}
-
 uint8_t power(uint8_t basis, uint8_t exponent) {
-    uint8_t result = (uint8_t) pow(basis, exponent);
+    uint8_t result = (uint8_t) basis;
     return result;
 }
 
@@ -137,31 +130,65 @@ void read_csv(char *filename, uint8_t *data) {
     fclose(file);
 }
 
+TMessage parseJson(char *filename) {
+    FILE *f = fopen(filename, "rb");
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    char *string = malloc(fsize + 1);
+    fread(string, 1, fsize, f);
+    fclose(f);
+
+    string[fsize] = 0;
+
+    cJSON *json = cJSON_Parse(string);
+
+    return NULL;
+}
+
+void getTasks(uint8_t *data, uint64_t dataCount) {
+    uint64_t taskFibonacciCount = data[0];
+    uint64_t taskPowerCount = data[1];
+    uint64_t taskBubbleSortCount = data[2];
+    uint64_t taskCount = taskFibonacciCount + taskPowerCount + taskBubbleSortCount;
+
+    TMessage *result[taskCount];
+    for (uint64_t i = 0; i < taskCount; i++) {
+        result[i] = (TMessage *) malloc(sizeof(TMessage));
+    }
+}
+
+void readThread() {
+
+}
+
+void writeThread() {
+
+}
+
 int main() {
-    char *filename = "C:\\projects\\itmo\\osp\\lab3\\data.csv";
-    int numberCount = 10;
-    uint8_t *data = (uint8_t *) malloc(numberCount * sizeof(uint8_t));
 
-    read_csv(filename, data);
 
-    pthread_t tid; /* идентификатор потока */
-    pthread_attr_t attr; /* отрибуты потока */
 
-    TMessage *message = (TMessage *) malloc(sizeof(TMessage));
-    message->type = BUBBLE_SORT_UINT64;
-    message->size = 4;
-    message->data = (uint8_t *) malloc(message->size * sizeof(uint8_t));
-    message->data[0] = 12;
-    message->data[1] = 2;
-    message->data[2] = 13;
-    message->data[3] = 1;
-
-    pthread_attr_init(&attr);
-    pthread_create(&tid, &attr, per_thread, message);
-
-    pthread_join(tid, NULL);
-
-    free(data);
-    free(message->data);
-    free(message);
+//    pthread_t tid; /* идентификатор потока */
+//    pthread_attr_t attr; /* отрибуты потока */
+//
+//    TMessage *message = (TMessage *) malloc(sizeof(TMessage));
+//    message->type = BUBBLE_SORT_UINT64;
+//    message->size = 4;
+//    message->data = (uint8_t *) malloc(message->size * sizeof(uint8_t));
+//    message->data[0] = 12;
+//    message->data[1] = 2;
+//    message->data[2] = 13;
+//    message->data[3] = 1;
+//
+//    pthread_attr_init(&attr);
+//    pthread_create(&tid, &attr, per_thread, message);
+//
+//    pthread_join(tid, NULL);
+//
+//    free(data);
+//    free(message->data);
+//    free(message);
 }
