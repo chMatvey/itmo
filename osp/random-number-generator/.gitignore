@@ -1,3 +1,4 @@
 .idea
 target
 random-number-generator.iml
+*.exe
