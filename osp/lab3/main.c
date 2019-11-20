@@ -15,6 +15,14 @@ typedef enum {
     STOP
 } EType;
 
+typedef enum {
+    PER_THREAD,
+    PER_TASK,
+    THREAD_POOL
+} StrategyType;
+
+const int buffer_size = 100000;
+
 typedef struct {
     EType type;
     uint64_t size;
@@ -35,7 +43,12 @@ void advancedPrint(char *str) {
 }
 
 uint8_t power(uint8_t basis, uint8_t exponent) {
-    uint8_t result = (uint8_t) basis;
+    uint8_t result = 1;
+    while (exponent != 0) {
+        result *= basis;
+        exponent--;
+    }
+
     return result;
 }
 
@@ -73,6 +86,59 @@ void bubbleSort(uint8_t *array, uint64_t length) {
     }
 }
 
+char *readFromFile(char *filename) {
+    FILE *f = fopen(filename, "rb");
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    char *string = malloc(fsize + 1);
+    fread(string, 1, fsize, f);
+    fclose(f);
+    free(f);
+
+    string[fsize] = 0;
+
+    return string;
+}
+
+TMessage *createMessage(char *string) {
+    cJSON *json = cJSON_Parse(string);
+    TMessage *msg = (TMessage *) malloc(sizeof(TMessage));
+
+    if (strcmp(json->child->valuestring, "FIBONACCI") == 0) {
+        msg->type = FIBONACCI;
+    } else if (strcmp(json->child->valuestring, "POW") == 0) {
+        msg->type = POW;
+    } else if (strcmp(json->child->valuestring, "BUBBLE_SORT") == 0) {
+        msg->type = BUBBLE_SORT_UINT64;
+    } else {
+        msg->type = STOP;
+    }
+
+    if (msg->type != STOP) {
+        msg->type = (EType) json->child->valuestring;
+        msg->size = (uint64_t) json->child->next->valueint;
+        cJSON *data = json->child->next->next->child;
+        uint64_t dataSize = 1;
+        msg->data = (uint8_t *) malloc(sizeof(uint8_t));
+        msg->data[0] = (uint8_t) data->valueint;
+
+        while (data->next != NULL) {
+            dataSize++;
+            data = data->next;
+            msg->data = (uint8_t *) realloc(msg->data, sizeof(uint8_t) * dataSize);
+            msg->data[dataSize - 1] = (uint8_t) data->valueint;
+        }
+
+        free(data);
+    }
+
+    free(json);
+
+    return msg;
+}
+
 void *per_thread(void *param) {
     TMessage *message = (TMessage *) param;
 
@@ -101,9 +167,6 @@ void *per_thread(void *param) {
             }
             break;
         }
-        case STOP: {
-            break;
-        }
         default: {
             break;
         }
@@ -112,83 +175,41 @@ void *per_thread(void *param) {
     return param;
 }
 
-void read_csv(char *filename, uint8_t *data) {
-    FILE *file = fopen(filename, "r");
-    char buf[1024];
-    int i = 0;
+void *reader_thread(void *param) {
+    StrategyType sType = (StrategyType) param;
+    char *string = NULL;
+    TMessage* msg = (TMessage *) malloc(sizeof(msg));
+    int wasStopMsg = 0;
 
-    while (fgets(buf, 1024, file)) {
-        char *tmp = strdup(buf);
-        const char *tok;
+    while(!wasStopMsg) {
+        fgets(string, buffer_size, stdin);
+        msg = createMessage(string);
 
-        for (tok = strtok(buf, ";"); tok && *tok; tok = strtok(NULL, ";\n")) {
-            data[i] = (uint8_t) atoi(tok);
-            i++;
+        if (msg->type == STOP) {
+            wasStopMsg = 1;
+        } else {
+            pthread_t tid; /* идентификатор потока */
+            pthread_attr_t attr; /* отрибуты потока */
+            pthread_attr_init(&attr);
+
+            if (sType == PER_THREAD) {
+                pthread_create(&tid, &attr, per_thread, msg);
+            } else {
+                return 0;
+            }
+
+            pthread_join(tid, NULL);
         }
     }
 
-    fclose(file);
-}
-
-TMessage parseJson(char *filename) {
-    FILE *f = fopen(filename, "rb");
-    fseek(f, 0, SEEK_END);
-    long fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    char *string = malloc(fsize + 1);
-    fread(string, 1, fsize, f);
-    fclose(f);
-
-    string[fsize] = 0;
-
-    cJSON *json = cJSON_Parse(string);
-
-    return NULL;
-}
-
-void getTasks(uint8_t *data, uint64_t dataCount) {
-    uint64_t taskFibonacciCount = data[0];
-    uint64_t taskPowerCount = data[1];
-    uint64_t taskBubbleSortCount = data[2];
-    uint64_t taskCount = taskFibonacciCount + taskPowerCount + taskBubbleSortCount;
-
-    TMessage *result[taskCount];
-    for (uint64_t i = 0; i < taskCount; i++) {
-        result[i] = (TMessage *) malloc(sizeof(TMessage));
-    }
-}
-
-void readThread() {
-
-}
-
-void writeThread() {
-
+    free(string);
+    free(msg);
 }
 
 int main() {
+    char *string = readFromFile("../data.json");
+    TMessage *msg = createMessage(string);
 
-
-
-//    pthread_t tid; /* идентификатор потока */
-//    pthread_attr_t attr; /* отрибуты потока */
-//
-//    TMessage *message = (TMessage *) malloc(sizeof(TMessage));
-//    message->type = BUBBLE_SORT_UINT64;
-//    message->size = 4;
-//    message->data = (uint8_t *) malloc(message->size * sizeof(uint8_t));
-//    message->data[0] = 12;
-//    message->data[1] = 2;
-//    message->data[2] = 13;
-//    message->data[3] = 1;
-//
-//    pthread_attr_init(&attr);
-//    pthread_create(&tid, &attr, per_thread, message);
-//
-//    pthread_join(tid, NULL);
-//
-//    free(data);
-//    free(message->data);
-//    free(message);
+    free(string);
+    free(msg);
 }
