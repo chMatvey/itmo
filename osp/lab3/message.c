@@ -3,10 +3,10 @@
 //
 
 #include "message.h"
-#include <stdint.h>
-#include <malloc.h>
 #include "cJSON/cJSON.h"
 #include "cJSON/cJSON.c"
+#include <stdint.h>
+#include <malloc.h>
 
 uint64_t power(uint8_t basis, uint8_t exponent) {
     uint64_t result = 1;
@@ -68,7 +68,7 @@ TMessage createPower(uint8_t basis, uint8_t exponent) {
     message.size = 2;
     message.data = calloc(message.size, sizeof(uint8_t));
     message.data[0] = basis;
-    message.data[0] = exponent;
+    message.data[1] = exponent;
 
     return message;
 }

@@ -7,6 +7,8 @@
 
 #endif //LAB3_HANDLER_H
 
+#pragma once
+
 typedef enum {
     PER_THREAD = 1,
     PER_TASK = 2,

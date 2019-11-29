@@ -7,6 +7,10 @@
 #include <pthread.h>
 #include "message.h"
 #include "handler.h"
+#include "lock-queue.h"
+
+#include "test/messageTest.h"
+
 
 void advancedPrint(char *str) {
     size_t length = strlen(str);
@@ -38,8 +42,13 @@ char *readFromFile(char *filename) {
 }
 
 int main() {
+    messageTest();
+
+    lockQueue = createLockQueue();
+
     char *string = readFromFile("../data.json");
-    TMessage *message = createMessage(string);
+    TMessage *message = malloc(sizeof(TMessage));
+    *message = createMessage(string);
 
     pthread_t tid; /* идентификатор потока */
     pthread_attr_t attr; /* отрибуты потока */
@@ -54,5 +63,4 @@ int main() {
     pthread_join(tid, NULL);
 
     free(string);
-    free(message);
 }

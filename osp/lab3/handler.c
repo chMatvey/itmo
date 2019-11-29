@@ -11,6 +11,40 @@
 
 const int buffer_size = 1024;
 
+void *reader_thread(void *param) {
+    StrategyType sType = (StrategyType) param;
+    char *string = NULL;
+    int wasStopMsg = 0;
+
+    while (!wasStopMsg) {
+        fgets(string, buffer_size, stdin);
+        TMessage *msg = (TMessage *) malloc(sizeof(TMessage));
+        *msg = createMessage(string);
+
+        if (msg->type == STOP) {
+            wasStopMsg = 1;
+        } else {
+            pthread_t tid; /* идентификатор потока */
+            pthread_attr_t attr; /* отрибуты потока */
+            pthread_attr_init(&attr);
+
+            if (sType == PER_THREAD) {
+                pthread_create(&tid, &attr, per_thread, msg);
+            } else {
+                return 0;
+            }
+
+            pthread_join(tid, NULL);
+        }
+    }
+
+    free(string);
+}
+
+void *writer_thread(void *param) {
+
+}
+
 void *per_thread(void *param) {
     TMessage *message = (TMessage *) param;
 
@@ -45,35 +79,4 @@ void *per_thread(void *param) {
     }
 
     pthread_exit(0);
-}
-
-void *reader_thread(void *param) {
-    StrategyType sType = (StrategyType) param;
-    char *string = NULL;
-    TMessage *msg = (TMessage *) calloc(1, sizeof(msg));
-    int wasStopMsg = 0;
-
-    while (!wasStopMsg) {
-        fgets(string, buffer_size, stdin);
-        msg = createMessage(string);
-
-        if (msg->type == STOP) {
-            wasStopMsg = 1;
-        } else {
-            pthread_t tid; /* идентификатор потока */
-            pthread_attr_t attr; /* отрибуты потока */
-            pthread_attr_init(&attr);
-
-            if (sType == PER_THREAD) {
-                pthread_create(&tid, &attr, per_thread, msg);
-            } else {
-                return 0;
-            }
-
-            pthread_join(tid, NULL);
-        }
-    }
-
-    free(string);
-    free(msg);
 }
