@@ -18,3 +18,5 @@ void getItemTest();
 void getCountTest();
 
 void destroyQueueTest();
+
+void lockQueueTest();

@@ -5,11 +5,12 @@
 #include "lock-queue.h"
 #include <malloc.h>
 
-LockQueue createLockQueue() {
-    LockQueue queue;
-    queue.count = 0;
-    queue.first = NULL;
-    pthread_mutex_init(&queue.mutex, NULL);
+LockQueue *createLockQueue() {
+    LockQueue *queue = (LockQueue *) malloc(sizeof(LockQueue));
+    queue->count = 0;
+    queue->first = NULL;
+    pthread_mutex_init(&queue->mutex, NULL);
+    pthread_cond_init(&queue->count_nonzero, NULL);
 
     return queue;
 }
@@ -17,12 +18,16 @@ LockQueue createLockQueue() {
 void addItem(LockQueue *queue, TMessage message) {
     struct LockItem *item = (struct LockItem *) malloc(sizeof(struct LockItem));
     item->message = message;
-    item->next = queue->first;
 
     pthread_mutex_lock(&queue->mutex);
 
-    queue->first = item;
+    if (queue->count == 0) {
+        pthread_cond_signal(&queue->count_nonzero);
+    }
+
     queue->count++;
+    item->next = queue->first;
+    queue->first = item;
 
     pthread_mutex_unlock(&queue->mutex);
 }
@@ -30,15 +35,25 @@ void addItem(LockQueue *queue, TMessage message) {
 TMessage getItem(LockQueue *queue) {
     pthread_mutex_lock(&queue->mutex);
 
-    struct LockItem result = *queue->first;
+    while (getCount(queue) == 0) {
+        pthread_cond_wait(&queue->count_nonzero, &queue->mutex);
+    }
+
+    struct LockItem *item = queue->first;
     if (queue->first != NULL) {
-        queue->first = queue->first->next;
         queue->count--;
+        queue->first = queue->first->next;
     }
 
     pthread_mutex_unlock(&queue->mutex);
 
-    return result.message;
+    TMessage message = item->message;
+    if (message.type != STOP) {
+        free(item->message.data);
+    }
+    free(item);
+
+    return message;
 }
 
 uint64_t getCount(LockQueue *queue) {
@@ -55,6 +70,7 @@ void destroyQueue(LockQueue *queue) {
         free(item);
     }
 
+    pthread_cond_destroy(&queue->count_nonzero);
     pthread_mutex_destroy(&queue->mutex);
     free(queue);
 }

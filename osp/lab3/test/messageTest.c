@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <assert.h>
 #include <malloc.h>
+#include <string.h>
 #include "../message.h"
 
 void powerTest() {
@@ -93,6 +94,37 @@ void createMessageTest() {
     assert(createMessage(stopStr).type == STOP);
 }
 
+void getJsonStrTest() {
+    int size = 2;
+    uint8_t *array = calloc(size, sizeof(uint8_t));
+    array[0] = 4;
+    array[1] = 3;
+
+    TMessage messageSort = createBubbleSort(array, size);
+    TMessage messagePow = createPower(3, 4);
+    TMessage messageFibonacci = createFibonacci(3);
+
+    assert(strcmp("{\n"
+                  "\t\"type\":\t\"FIBONACCI\",\n"
+                  "\t\"size\":\t1,\n"
+                  "\t\"data\":\t[3]\n"
+                  "}", getJsonStr(messageFibonacci)) == 0);
+    assert(strcmp("{\n"
+                  "\t\"type\":\t\"POW\",\n"
+                  "\t\"size\":\t2,\n"
+                  "\t\"data\":\t[1027, 0]\n"
+                  "}", getJsonStr(messagePow)) == 0);
+    assert(strcmp("{\n"
+                  "\t\"type\":\t\"BUBBLE_SORT_UINT64\",\n"
+                  "\t\"size\":\t2,\n"
+                  "\t\"data\":\t[772, 0]\n"
+                  "}", getJsonStr(messageSort)) == 0);
+
+    free(messageSort.data);
+    free(messagePow.data);
+    free(messageFibonacci.data);
+}
+
 void messageTest() {
     powerTest();
     fibonacciTest();
@@ -102,5 +134,6 @@ void messageTest() {
     createBubbleSortTest();
     createStopTest();
     createMessageTest();
+    getJsonStrTest();
 }
 

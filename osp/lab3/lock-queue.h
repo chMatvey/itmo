@@ -23,11 +23,12 @@ typedef struct {
     uint64_t count;
     struct LockItem *first;
     pthread_mutex_t mutex;
+    pthread_cond_t count_nonzero;
 } LockQueue;
 
-LockQueue lockQueue;
+LockQueue *lockQueue;
 
-LockQueue createLockQueue();
+LockQueue *createLockQueue();
 
 void addItem(LockQueue *queue, TMessage message);
 

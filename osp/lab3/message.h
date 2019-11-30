@@ -39,3 +39,5 @@ TMessage createBubbleSort(uint8_t *array, uint64_t length);
 TMessage createStop();
 
 TMessage createMessage(char *string);
+
+char *getJsonStr(TMessage message);

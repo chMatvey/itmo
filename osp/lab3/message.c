@@ -91,9 +91,8 @@ TMessage createStop() {
 
 TMessage createMessage(char *string) {
     cJSON *json = cJSON_Parse(string);
-    TMessage message;
-
     cJSON *data = json->child->next->next->child;
+    TMessage message;
 
     if (strcmp(json->child->valuestring, "FIBONACCI") == 0) {
         message = createFibonacci((uint8_t) data->valueint);
@@ -113,7 +112,6 @@ TMessage createMessage(char *string) {
         }
 
         message = createBubbleSort(array, size);
-        free(array);
     } else {
         message = createStop();
     }
@@ -121,5 +119,43 @@ TMessage createMessage(char *string) {
     free(json);
 
     return message;
+}
+
+char *getMessageTypeStr(EType type) {
+    if (type == FIBONACCI) {
+        return "FIBONACCI";
+    } else if (type == POW) {
+        return "POW";
+    } else if (type == BUBBLE_SORT_UINT64) {
+        return "BUBBLE_SORT_UINT64";
+    } else {
+        return "STOP";
+    }
+
+}
+
+char *getJsonStr(TMessage message) {
+    cJSON *monitor = cJSON_CreateObject();
+    cJSON *type = cJSON_CreateString(getMessageTypeStr(message.type));
+    cJSON *size = cJSON_CreateNumber(message.size);
+    uint64_t count = message.size;
+    if (message.type == FIBONACCI) {
+        count = 1;
+    } else if (message.type == POW) {
+        count = 2;
+    }
+    cJSON *data = cJSON_CreateIntArray((const int *) message.data, count);
+    cJSON_AddItemToObject(monitor, "type", type);
+    cJSON_AddItemToObject(monitor, "size", size);
+    cJSON_AddItemToObject(monitor, "data", data);
+
+    char *result = cJSON_Print(monitor);
+
+    free(data);
+    free(size);
+    free(type);
+    free(monitor);
+
+    return result;
 }
 

@@ -4,4 +4,4 @@ project(lab3 C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_FLAGS -pthread)
 
-add_executable(lab3 main.c message.h message.c handler.h handler.c test/messageTest.c test/messageTest.h lock-queue.c lock-queue.h test/lock-queueTest.h test/lock-queue.c)
+add_executable(lab3 main.c message.h message.c handler.h handler.c test/messageTest.c test/messageTest.h lock-queue.c lock-queue.h test/lock-queueTest.h test/lock-queue.c test/handlerTest.h test/handlerTest.c)

@@ -2,6 +2,8 @@
 // Created by matvey on 25.11.2019.
 //
 
+#include "message.h"
+
 #ifndef LAB3_HANDLER_H
 #define LAB3_HANDLER_H
 
@@ -15,6 +17,10 @@ typedef enum {
     THREAD_POOL = 3
 } StrategyType;
 
-void *per_thread(void *param);
-
 void *reader_thread(void *param);
+
+void writeToFile(TMessage message, int fileDescriptor);
+
+void *writer_thread(void *param);
+
+void *per_thread(void *param);
