@@ -15,7 +15,7 @@ LockQueue *createLockQueue() {
     return queue;
 }
 
-void addItem(LockQueue *queue, TMessage message) {
+void addItem(LockQueue *queue, TMessage *message) {
     struct LockItem *item = (struct LockItem *) malloc(sizeof(struct LockItem));
     item->message = message;
 
@@ -32,7 +32,7 @@ void addItem(LockQueue *queue, TMessage message) {
     pthread_mutex_unlock(&queue->mutex);
 }
 
-TMessage getItem(LockQueue *queue) {
+TMessage *getItem(LockQueue *queue) {
     pthread_mutex_lock(&queue->mutex);
 
     while (getCount(queue) == 0) {
@@ -47,10 +47,7 @@ TMessage getItem(LockQueue *queue) {
 
     pthread_mutex_unlock(&queue->mutex);
 
-    TMessage message = item->message;
-    if (message.type != STOP) {
-        free(item->message.data);
-    }
+    TMessage *message = item->message;
     free(item);
 
     return message;
@@ -67,6 +64,8 @@ void destroyQueue(LockQueue *queue) {
     while (next != NULL) {
         item = next;
         next = item->next;
+        free(item->message->data);
+        free(item->message);
         free(item);
     }
 

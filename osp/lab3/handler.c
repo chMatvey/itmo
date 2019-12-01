@@ -28,7 +28,7 @@ void *reader_thread(void *param) {
 
         if (msg->type == STOP) {
             wasStopMsg = 1;
-            addItem(lockQueue, *msg);
+            addItem(lockQueue, msg);
         } else {
             pthread_t tid;
             pthread_attr_t attr;
@@ -73,13 +73,15 @@ void *writer_thread(void *param) {
     }
 
     while (!wasStopMsg) {
-        TMessage message = getItem(lockQueue);
+        TMessage *message = getItem(lockQueue);
 
-        if (message.type == STOP) {
+        if (message->type == STOP) {
             wasStopMsg = 1;
         } else {
-            writeToFile(message, destFile);
+            writeToFile(*message, destFile);
+            free(message->data);
         }
+        free(message);
     }
 
     close(destFile);
@@ -108,9 +110,7 @@ void *per_thread(void *param) {
         }
     }
 
-    addItem(lockQueue, *message);
-
-    free(message);
+    addItem(lockQueue, message);
 
     pthread_exit(0);
 }

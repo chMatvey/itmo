@@ -11,8 +11,11 @@
 LockQueue *createTestLockQueue() {
     LockQueue *queue = createLockQueue();
 
-    addItem(queue, createFibonacci(3));
-    addItem(queue, createPower(1, 2));
+    TMessage *message = (TMessage *) malloc(sizeof(TMessage));
+    *message = createFibonacci(3);
+    addItem(queue, message);
+    *message = createPower(1, 2);
+    addItem(queue, message);
 
     return queue;
 }
@@ -26,16 +29,20 @@ void createLockQueueTest() {
 
 void addItemTest() {
     LockQueue *queue = createTestLockQueue();
-    addItem(queue, createFibonacci(5));
+    TMessage *message = (TMessage *) malloc(sizeof(TMessage));
+    *message = createFibonacci(3);
+    addItem(queue, message);
 
     assert(queue->count == 3);
+
     destroyQueue(queue);
 }
 
 void getItemTest() {
     LockQueue *queue = createTestLockQueue();
 
-    assert(getItem(queue).data != NULL);
+    assert(getItem(queue)->data != NULL);
+
     destroyQueue(queue);;
 }
 

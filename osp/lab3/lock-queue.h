@@ -15,7 +15,7 @@
 #include "message.h"
 
 struct LockItem {
-    TMessage message;
+    TMessage *message;
     struct LockItem *next;
 };
 
@@ -30,9 +30,9 @@ LockQueue *lockQueue;
 
 LockQueue *createLockQueue();
 
-void addItem(LockQueue *queue, TMessage message);
+void addItem(LockQueue *queue, TMessage *message);
 
-TMessage getItem(LockQueue *queue);
+TMessage *getItem(LockQueue *queue);
 
 uint64_t getCount(LockQueue *queue);
 
