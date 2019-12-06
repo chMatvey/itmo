@@ -17,7 +17,7 @@ class Sender(
         val messageCount = generateNumber()
 
         for (i in 0..messageCount) {
-            Thread.sleep(generateNumber().toLong())
+            Thread.sleep(generateNumber().toLong() and 127)
 
             println(gson.toJson(generateMsg()))
         }
@@ -35,9 +35,9 @@ class Sender(
 
     private fun generateNumbers(count: Int): Array<Int> {
         return when (distribution) {
-            Distribution.EXPONENTIAL -> generator.exponential(param1.toDouble(), param2.toDouble(), count).map { it.toInt() }.toTypedArray()
-            Distribution.UNIFORM -> generator.uniform(param1.toDouble(), param2.toDouble(), count).map { it.toInt() }.toTypedArray()
-            Distribution.NORMAL -> generator.normal(param1.toDouble(), param2.toDouble(), count).map { it.toInt() }.toTypedArray()
+            Distribution.EXPONENTIAL -> generator.exponential(param1.toDouble(), param2.toDouble(), count).map { it.toInt() and 255 }.toTypedArray()
+            Distribution.UNIFORM -> generator.uniform(param1.toDouble(), param2.toDouble(), count).map { it.toInt() and 255 }.toTypedArray()
+            Distribution.NORMAL -> generator.normal(param1.toDouble(), param2.toDouble(), count).map { it.toInt() and 255 }.toTypedArray()
         }
     }
 

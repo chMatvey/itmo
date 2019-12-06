@@ -13,7 +13,7 @@
 #include "message.h"
 #include "lock-queue.h"
 
-const int buffer_size = 1024;
+const int buffer_size = 1024 * 1024;
 
 void *reader_thread(void *param) {
     StrategyType sType = (StrategyType) param;
@@ -60,6 +60,7 @@ void writeToFile(TMessage message, int fileDescriptor) {
         }
         size += s;
     }
+    write(fileDescriptor, "\n", 1);
 
     free(str);
 }

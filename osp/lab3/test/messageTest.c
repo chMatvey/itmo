@@ -137,3 +137,29 @@ void messageTest() {
     getJsonStrTest();
 }
 
+char *readFromFile(char *filename) {
+    FILE *f = fopen(filename, "rb");
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);
+
+    char *string = malloc(fsize + 1);
+    fread(string, 1, fsize, f);
+    fclose(f);
+    free(f);
+
+    string[fsize] = 0;
+
+    return string;
+}
+
+void createMessageFromFileTest() {
+    char *str = readFromFile("../data.json");
+    TMessage message = createMessage(str);
+
+    assert(message.size != 0);
+
+    free(str);
+    free(message.data);
+}
+
