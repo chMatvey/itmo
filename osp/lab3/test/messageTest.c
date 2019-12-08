@@ -88,10 +88,19 @@ void createMessageTest() {
     char *sortStr = "{\"type\":\"BUBBLE_SORT\",\"size\":21,\"data\":[246,85,109,34,164,184,17,244,10,83,3,192,237,7,184,11,128,81,192,215,167]}";
     char *stopStr = "{\"type\":\"STOP\",\"size\":0,\"data\":[]}";
 
-    assert(createMessage(fibonacciStr).type == FIBONACCI);
-    assert(createMessage(powerStr).type == POW);
-    assert(createMessage(sortStr).type == BUBBLE_SORT_UINT64);
-    assert(createMessage(stopStr).type == STOP);
+    TMessage msqFibonacci = createMessage(fibonacciStr);
+    TMessage msgPower = createMessage(powerStr);
+    TMessage msgSort = createMessage(sortStr);
+    TMessage msgStop = createMessage(stopStr);
+
+    assert(msqFibonacci.type == FIBONACCI);
+    assert(msgPower.type == POW);
+    assert(msgSort.type == BUBBLE_SORT_UINT64);
+    assert(msgStop.type == STOP);
+
+    free(msqFibonacci.data);
+    free(msgPower.data);
+    free(msgSort.data);
 }
 
 void getJsonStrTest() {
@@ -100,26 +109,33 @@ void getJsonStrTest() {
     array[0] = 4;
     array[1] = 3;
 
-    TMessage messageSort = createBubbleSort(array, size);
-    TMessage messagePow = createPower(3, 4);
     TMessage messageFibonacci = createFibonacci(3);
+    TMessage messagePow = createPower(3, 4);
+    TMessage messageSort = createBubbleSort(array, size);
+
+    char *strFibonacci = getJsonStr(messageFibonacci);
+    char *strPow = getJsonStr(messagePow);
+    char *strSort = getJsonStr(messageSort);
 
     assert(strcmp("{\n"
                   "\t\"type\":\t\"FIBONACCI\",\n"
                   "\t\"size\":\t1,\n"
                   "\t\"data\":\t[3]\n"
-                  "}", getJsonStr(messageFibonacci)) == 0);
+                  "}", strFibonacci) == 0);
     assert(strcmp("{\n"
                   "\t\"type\":\t\"POW\",\n"
                   "\t\"size\":\t2,\n"
-                  "\t\"data\":\t[1027, 0]\n"
-                  "}", getJsonStr(messagePow)) == 0);
+                  "\t\"data\":\t[3, 4]\n"
+                  "}", strPow) == 0);
     assert(strcmp("{\n"
                   "\t\"type\":\t\"BUBBLE_SORT_UINT64\",\n"
                   "\t\"size\":\t2,\n"
-                  "\t\"data\":\t[772, 0]\n"
-                  "}", getJsonStr(messageSort)) == 0);
+                  "\t\"data\":\t[4, 3]\n"
+                  "}", strSort) == 0);
 
+    free(strFibonacci);
+    free(strPow);
+    free(strSort);
     free(messageSort.data);
     free(messagePow.data);
     free(messageFibonacci.data);
@@ -135,31 +151,5 @@ void messageTest() {
     createStopTest();
     createMessageTest();
     getJsonStrTest();
-}
-
-char *readFromFile(char *filename) {
-    FILE *f = fopen(filename, "rb");
-    fseek(f, 0, SEEK_END);
-    long fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    char *string = malloc(fsize + 1);
-    fread(string, 1, fsize, f);
-    fclose(f);
-    free(f);
-
-    string[fsize] = 0;
-
-    return string;
-}
-
-void createMessageFromFileTest() {
-    char *str = readFromFile("../data.json");
-    TMessage message = createMessage(str);
-
-    assert(message.size != 0);
-
-    free(str);
-    free(message.data);
 }
 

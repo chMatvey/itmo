@@ -11,7 +11,8 @@
 #include <asm/errno.h>
 #include <fcntl.h>
 #include "message.h"
-#include "lock-queue.h"
+#include "lock-queueTest.h"
+#include <time.h>
 
 const int buffer_size = 1024 * 1024;
 

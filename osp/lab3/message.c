@@ -101,19 +101,17 @@ TMessage createMessage(char *string) {
         uint8_t exponent = data->next->valueint;
         message = createPower(basic, exponent);
     } else if (strcmp(json->child->valuestring, "BUBBLE_SORT") == 0) {
-        message = createFibonacci((uint8_t) data->valueint);
+        uint64_t size = json->child->next->valueint;
+        uint8_t *array = calloc(size, sizeof(uint8_t));
+        uint64_t i = 0;
 
-//        uint64_t size = json->child->next->valueint;
-//        uint8_t *array = calloc(sizeof(uint8_t), size);;
-//        uint64_t i = 0;
-//
-//        while (data != NULL) {
-//            array[i] = (uint8_t) data->valueint;
-//            data = data->next;
-//            i++;
-//        }
-//
-//        message = createBubbleSort(array, size);
+        while (data != NULL) {
+            array[i] = (uint8_t) data->valueint;
+            data = data->next;
+            i++;
+        }
+
+        message = createBubbleSort(array, size);
     } else {
         message = createStop();
     }
@@ -147,7 +145,7 @@ char *getJsonStr(TMessage message) {
     } else if (message.type == POW) {
         count = 2;
     }
-    int *array = (int *) calloc(sizeof(int), count);
+    int *array = (int *) calloc(count, sizeof(int));
     for (uint64_t i = 0; i < count; i++) {
         array[i] = message.data[i];
     }

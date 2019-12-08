@@ -2,7 +2,7 @@
 // Created by matvey on 29.11.2019.
 //
 
-#include "lock-queue.h"
+#include "lock-queueTest.h"
 #include <malloc.h>
 
 LockQueue *createLockQueue() {
@@ -59,11 +59,11 @@ uint64_t getCount(LockQueue *queue) {
 
 void destroyQueue(LockQueue *queue) {
     struct LockItem *item;
-    struct LockItem *next = queue->first;
 
-    while (next != NULL) {
-        item = next;
-        next = item->next;
+    while (queue->first != NULL) {
+        item = queue->first;
+        queue->first = queue->first->next;
+
         free(item->message->data);
         free(item->message);
         free(item);

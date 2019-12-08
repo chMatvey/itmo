@@ -3,14 +3,17 @@
 #include <string.h>
 #include <pthread.h>
 #include "handler.h"
-#include "lock-queue.h"
+#include "lock-queueTest.h"
 #include <execinfo.h>
 #include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>
+#include "timer.h"
 
-//#include "test/messageTest.h"
-//#include "test/lock-queueTest.h"
-//#include "test/handlerTest.h"
+#include "test/messageTest.h"
+#include "test/lock-queueTest.h"
+#include "test/handlerTest.h"
+#include "test/timerTest.h"
 
 void handler(int sig) {
     void *array[10];
@@ -26,14 +29,17 @@ void handler(int sig) {
 }
 
 int main() {
-//    messageTest();
-//    lockQueueTest();
-//    handlerTest();
-//    createMessageFromFileTest();
-
     signal(SIGSEGV, handler);
 
+    messageTest();
+    lockQueueTest();
+    handlerTest();
+    timerTest();
+
     lockQueue = createLockQueue();
+    readTimes = createTimeQueue();
+    executionTimes = createTimeQueue();
+    writeTimes = createTimeQueue();
 
     pthread_t reader_tid; /* идентификатор потока */
     pthread_attr_t reader_attr; /* отрибуты потока */
@@ -53,5 +59,20 @@ int main() {
     pthread_join(reader_tid, NULL);
     pthread_join(writer_tid, NULL);
 
+    int readTimesFile = open("../read", O_WRONLY | O_CREAT, 00700);
+    int executionTimesFile = open("../execution", O_WRONLY | O_CREAT, 00700);
+    int writeTimesFIle = open("../writte", O_WRONLY | O_CREAT, 00700);
+
+    printTimesToFile(*readTimes, readTimesFile);
+    printTimesToFile(*executionTimes, executionTimesFile);
+    printTimesToFile(*writeTimes, writeTimesFIle);
+
+    close(readTimesFile);
+    close(executionTimesFile);
+    close(writeTimesFIle);
+
     destroyQueue(lockQueue);
+    destroyTimeQueue(readTimes);
+    destroyTimeQueue(executionTimes);
+    destroyTimeQueue(writeTimes);
 }
