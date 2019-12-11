@@ -89,15 +89,24 @@ void destroyTimeQueue(TimeQueue *queue) {
     free(queue);
 }
 
+int compare(const void *a, const void *b) {
+    return (int) (*(long *) a - *(long *) b);
+}
+
 long *toArray(TimeQueue queue) {
     if (queue.count == 0) {
         return NULL;
     }
 
-    long *result = (long *) calloc(queue.count, sizeof(long));
+    long *array = (long *) calloc(queue.count, sizeof(long));
     struct Item *item = queue.first;
 
     for (uint64_t i = 0; i < queue.count; i++) {
-        
+        array[i] = item->value;
+        item = item->next;
     }
+
+    qsort(array, queue.count, sizeof(long), compare);
+
+    return array;
 }

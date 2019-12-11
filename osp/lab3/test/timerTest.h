@@ -14,3 +14,5 @@ void timerTest();
 void createTimeQueueTest();
 
 void addTimeTest();
+
+void toArrayTest();
