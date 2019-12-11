@@ -22,10 +22,17 @@ void *reader_thread(void *param) {
     int wasStopMsg = 0;
 
     while (!wasStopMsg) {
+        struct timespec *start = getTime();
         fgets(string, buffer_size, stdin);
         printf("%s\n", string);
         TMessage *msg = (TMessage *) malloc(sizeof(TMessage));
         *msg = createMessage(string);
+        struct timespec *finish = getTime();
+
+        addTime(readTimes, *start, *finish);
+
+        free(start);
+        free(finish);
 
         if (msg->type == STOP) {
             wasStopMsg = 1;
@@ -63,7 +70,14 @@ void *writer_thread(void *param) {
         if (message->type == STOP) {
             wasStopMsg = 1;
         } else {
+            struct timespec *start = getTime();
             writeMessageToFile(*message, destFile);
+            struct timespec *finish = getTime();
+
+            addTime(writeTimes, *start, *finish);
+
+            free(start);
+            free(finish);
             free(message->data);
         }
         free(message);
@@ -95,7 +109,6 @@ void *per_thread(void *param) {
             break;
         }
     }
-
     struct timespec *finish = getTime();
 
     addItem(lockQueue, message);

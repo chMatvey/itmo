@@ -58,18 +58,14 @@ void printTimesToFile(TimeQueue queue, int fileDescriptor) {
 
     long *array = toArray(queue);
 
-    for (long i = 0; i < queue.count; i++) {
+    for (uint64_t i = 0; i < queue.count; i++) {
         sprintf(str, "%ld", array[i]);
-        size_t length = strlen(str);
-        while (size != length) {
-            size_t s = write(fileDescriptor, str + size, length - size);
-            if (s == -1) {
-                _exit(EIO);
-            }
-            size += s;
-        }
+
+        printToFile(str, fileDescriptor);
+        printToFile(",", fileDescriptor);
     }
 
+    free(array);
     free(str);
 }
 

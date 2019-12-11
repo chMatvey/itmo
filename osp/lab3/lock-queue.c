@@ -3,6 +3,7 @@
 //
 
 #include "lock-queueTest.h"
+#include "timer.h"
 #include <malloc.h>
 
 LockQueue *createLockQueue() {
@@ -19,17 +20,25 @@ void addItem(LockQueue *queue, TMessage *message) {
     struct LockItem *item = (struct LockItem *) malloc(sizeof(struct LockItem));
     item->message = message;
 
+    struct timespec *start = getTime();
+
     pthread_mutex_lock(&queue->mutex);
 
     if (queue->count == 0) {
         pthread_cond_signal(&queue->count_nonzero);
     }
 
+    struct timespec *finish = getTime();
+
     queue->count++;
     item->next = queue->first;
     queue->first = item;
 
     pthread_mutex_unlock(&queue->mutex);
+
+    addTime(inQueueTimes, *start, *finish);
+    free(start);
+    free(finish);
 }
 
 TMessage *getItem(LockQueue *queue) {

@@ -58,5 +58,4 @@ void toArrayTest() {
 
     free(array);
     destroyTimeQueue(queue);
-
 }

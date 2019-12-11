@@ -31,18 +31,16 @@ void handler(int sig) {
 int main() {
     signal(SIGSEGV, handler);
 
-    messageTest();
-    lockQueueTest();
-    handlerTest();
-    timerTest();
-
-    return 1;
-
     lockQueue = createLockQueue();
     readTimes = createTimeQueue();
     inQueueTimes = createTimeQueue();
     executionTimes = createTimeQueue();
     writeTimes = createTimeQueue();
+
+//    messageTest();
+//    lockQueueTest();
+//    handlerTest();
+//    timerTest();
 
     pthread_t reader_tid; /* идентификатор потока */
     pthread_attr_t reader_attr; /* отрибуты потока */
@@ -63,14 +61,17 @@ int main() {
     pthread_join(writer_tid, NULL);
 
     int readTimesFile = open("../read", O_WRONLY | O_CREAT, 00700);
+    int inQueueFile = open("../queue", O_WRONLY | O_CREAT, 00700);
     int executionTimesFile = open("../execution", O_WRONLY | O_CREAT, 00700);
     int writeTimesFIle = open("../writte", O_WRONLY | O_CREAT, 00700);
 
     printTimesToFile(*readTimes, readTimesFile);
+    printTimesToFile(*inQueueTimes, inQueueFile);
     printTimesToFile(*executionTimes, executionTimesFile);
     printTimesToFile(*writeTimes, writeTimesFIle);
 
     close(readTimesFile);
+    close(inQueueFile);
     close(executionTimesFile);
     close(writeTimesFIle);
 
