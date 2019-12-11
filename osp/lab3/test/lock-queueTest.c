@@ -3,7 +3,7 @@
 //
 
 #include "lock-queueTest.h"
-#include "../lock-queue.h"
+#include "../lock-queueTest.h"
 #include <assert.h>
 #include <malloc.h>
 #include "../message.h"
@@ -11,8 +11,12 @@
 LockQueue *createTestLockQueue() {
     LockQueue *queue = createLockQueue();
 
-    addItem(queue, createFibonacci(3));
-    addItem(queue, createPower(1, 2));
+    TMessage *message1 = (TMessage *) malloc(sizeof(TMessage));
+    TMessage *message2 = (TMessage *) malloc(sizeof(TMessage));
+    *message1 = createFibonacci(3);
+    addItem(queue, message1);
+    *message2 = createPower(1, 2);
+    addItem(queue, message2);
 
     return queue;
 }
@@ -26,17 +30,24 @@ void createLockQueueTest() {
 
 void addItemTest() {
     LockQueue *queue = createTestLockQueue();
-    addItem(queue, createFibonacci(5));
+    TMessage *message = (TMessage *) malloc(sizeof(TMessage));
+    *message = createFibonacci(3);
+    addItem(queue, message);
 
     assert(queue->count == 3);
+
     destroyQueue(queue);
 }
 
 void getItemTest() {
     LockQueue *queue = createTestLockQueue();
 
-    assert(getItem(queue).data != NULL);
-    destroyQueue(queue);;
+    TMessage * msg = getItem(queue);
+    assert(msg->data != NULL);
+
+    free(msg->data);
+    free(msg);
+    destroyQueue(queue);
 }
 
 void getCountTest() {
@@ -49,8 +60,6 @@ void getCountTest() {
 void destroyQueueTest() {
     LockQueue *queue = createTestLockQueue();
     destroyQueue(queue);
-
-    assert(queue->count == 0);
 }
 
 void lockQueueTest() {

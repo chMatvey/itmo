@@ -11,9 +11,10 @@
 #include <asm/errno.h>
 #include <fcntl.h>
 #include "message.h"
-#include "lock-queue.h"
+#include "lock-queueTest.h"
+#include "timer.h"
 
-const int buffer_size = 1024;
+const int buffer_size = 1024 * 1024;
 
 void *reader_thread(void *param) {
     StrategyType sType = (StrategyType) param;
@@ -28,7 +29,7 @@ void *reader_thread(void *param) {
 
         if (msg->type == STOP) {
             wasStopMsg = 1;
-            addItem(lockQueue, *msg);
+            addItem(lockQueue, msg);
         } else {
             pthread_t tid;
             pthread_attr_t attr;
@@ -48,22 +49,6 @@ void *reader_thread(void *param) {
     pthread_exit(0);
 }
 
-void writeToFile(TMessage message, int fileDescriptor) {
-    char *str = getJsonStr(message);
-    size_t length = strlen(str);
-    size_t size = 0;
-
-    while (size != length) {
-        size_t s = write(fileDescriptor, str + size, length - size);
-        if (s == -1) {
-            _exit(EIO);
-        }
-        size += s;
-    }
-
-    free(str);
-}
-
 void *writer_thread(void *param) {
     int wasStopMsg = 0;
 
@@ -73,13 +58,15 @@ void *writer_thread(void *param) {
     }
 
     while (!wasStopMsg) {
-        TMessage message = getItem(lockQueue);
+        TMessage *message = getItem(lockQueue);
 
-        if (message.type == STOP) {
+        if (message->type == STOP) {
             wasStopMsg = 1;
         } else {
-            writeToFile(message, destFile);
+            writeMessageToFile(*message, destFile);
+            free(message->data);
         }
+        free(message);
     }
 
     close(destFile);
@@ -89,6 +76,7 @@ void *writer_thread(void *param) {
 
 void *per_thread(void *param) {
     TMessage *message = (TMessage *) param;
+    struct timespec *start = getTime();
 
     switch (message->type) {
         case FIBONACCI: {
@@ -108,9 +96,13 @@ void *per_thread(void *param) {
         }
     }
 
-    addItem(lockQueue, *message);
+    struct timespec *finish = getTime();
 
-    free(message);
+    addItem(lockQueue, message);
+    addTime(executionTimes, *start, *finish);
+
+    free(start);
+    free(finish);
 
     pthread_exit(0);
 }

@@ -41,3 +41,5 @@ TMessage createStop();
 TMessage createMessage(char *string);
 
 char *getJsonStr(TMessage message);
+
+void writeMessageToFile(TMessage message, int fileDescriptor);

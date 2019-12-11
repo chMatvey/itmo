@@ -26,3 +26,5 @@ void createStopTest();
 void createMessageTest();
 
 void messageTest();
+
+void createMessageFromFileTest();

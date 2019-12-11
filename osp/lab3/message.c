@@ -7,6 +7,7 @@
 #include "cJSON/cJSON.c"
 #include <stdint.h>
 #include <malloc.h>
+#include "file-manager.h"
 
 uint64_t power(uint8_t basis, uint8_t exponent) {
     uint64_t result = 1;
@@ -101,14 +102,14 @@ TMessage createMessage(char *string) {
         uint8_t exponent = data->next->valueint;
         message = createPower(basic, exponent);
     } else if (strcmp(json->child->valuestring, "BUBBLE_SORT") == 0) {
-        uint64_t size = 0;
-        uint8_t *array = NULL;
+        uint64_t size = json->child->next->valueint;
+        uint8_t *array = calloc(size, sizeof(uint8_t));
+        uint64_t i = 0;
 
         while (data != NULL) {
-            size++;
-            array = (uint8_t *) realloc(array, sizeof(uint8_t) * size);
-            array[size - 1] = (uint8_t) data->valueint;
+            array[i] = (uint8_t) data->valueint;
             data = data->next;
+            i++;
         }
 
         message = createBubbleSort(array, size);
@@ -116,7 +117,7 @@ TMessage createMessage(char *string) {
         message = createStop();
     }
 
-    free(json);
+    cJSON_Delete(json);
 
     return message;
 }
@@ -139,23 +140,35 @@ char *getJsonStr(TMessage message) {
     cJSON *type = cJSON_CreateString(getMessageTypeStr(message.type));
     cJSON *size = cJSON_CreateNumber(message.size);
     uint64_t count = message.size;
+
     if (message.type == FIBONACCI) {
         count = 1;
     } else if (message.type == POW) {
         count = 2;
     }
-    cJSON *data = cJSON_CreateIntArray((const int *) message.data, count);
+    int *array = (int *) calloc(count, sizeof(int));
+    for (uint64_t i = 0; i < count; i++) {
+        array[i] = message.data[i];
+    }
+
+    cJSON *data = cJSON_CreateIntArray(array, count);
     cJSON_AddItemToObject(monitor, "type", type);
     cJSON_AddItemToObject(monitor, "size", size);
     cJSON_AddItemToObject(monitor, "data", data);
 
     char *result = cJSON_Print(monitor);
 
-    free(data);
-    free(size);
-    free(type);
-    free(monitor);
+    free(array);
+    cJSON_Delete(monitor);
 
     return result;
 }
 
+void writeMessageToFile(TMessage message, int fileDescriptor) {
+    char *str = getJsonStr(message);
+
+    printToFile(str, fileDescriptor);
+    printToFile("\n", fileDescriptor);
+
+    free(str);
+}
