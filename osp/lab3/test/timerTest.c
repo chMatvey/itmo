@@ -27,12 +27,20 @@ void addTimeTest() {
 
     struct timespec *first = getTime();
     struct timespec *second = getTime();
-
     addTime(queue, *first, *second);
 
     assert(queue->count == 1);
 
+    struct timespec *first1 = getTime();
+    struct timespec *second1 = getTime();
+    addTime(queue, *first1, *second1);
+
+    assert(queue->count == 2);
+
     free(first);
+    free(first1);
     free(second);
+    free(second1);
+
     destroyTimeQueue(queue);
 }

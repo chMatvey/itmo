@@ -12,7 +12,7 @@
 #include <fcntl.h>
 #include "message.h"
 #include "lock-queueTest.h"
-#include <time.h>
+#include "timer.h"
 
 const int buffer_size = 1024 * 1024;
 
@@ -49,23 +49,6 @@ void *reader_thread(void *param) {
     pthread_exit(0);
 }
 
-void writeToFile(TMessage message, int fileDescriptor) {
-    char *str = getJsonStr(message);
-    size_t length = strlen(str);
-    size_t size = 0;
-
-    while (size != length) {
-        size_t s = write(fileDescriptor, str + size, length - size);
-        if (s == -1) {
-            _exit(EIO);
-        }
-        size += s;
-    }
-    write(fileDescriptor, "\n", 1);
-
-    free(str);
-}
-
 void *writer_thread(void *param) {
     int wasStopMsg = 0;
 
@@ -80,7 +63,7 @@ void *writer_thread(void *param) {
         if (message->type == STOP) {
             wasStopMsg = 1;
         } else {
-            writeToFile(*message, destFile);
+            writeMessageToFile(*message, destFile);
             free(message->data);
         }
         free(message);
@@ -93,6 +76,7 @@ void *writer_thread(void *param) {
 
 void *per_thread(void *param) {
     TMessage *message = (TMessage *) param;
+    struct timespec *start = getTime();
 
     switch (message->type) {
         case FIBONACCI: {
@@ -112,7 +96,13 @@ void *per_thread(void *param) {
         }
     }
 
+    struct timespec *finish = getTime();
+
     addItem(lockQueue, message);
+    addTime(executionTimes, *start, *finish);
+
+    free(start);
+    free(finish);
 
     pthread_exit(0);
 }

@@ -36,8 +36,11 @@ int main() {
     handlerTest();
     timerTest();
 
+    return 1;
+
     lockQueue = createLockQueue();
     readTimes = createTimeQueue();
+    inQueueTimes = createTimeQueue();
     executionTimes = createTimeQueue();
     writeTimes = createTimeQueue();
 
@@ -73,6 +76,7 @@ int main() {
 
     destroyQueue(lockQueue);
     destroyTimeQueue(readTimes);
+    destroyTimeQueue(inQueueTimes);
     destroyTimeQueue(executionTimes);
     destroyTimeQueue(writeTimes);
 }

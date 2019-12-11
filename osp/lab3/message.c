@@ -7,6 +7,7 @@
 #include "cJSON/cJSON.c"
 #include <stdint.h>
 #include <malloc.h>
+#include "file-manager.h"
 
 uint64_t power(uint8_t basis, uint8_t exponent) {
     uint64_t result = 1;
@@ -163,3 +164,11 @@ char *getJsonStr(TMessage message) {
     return result;
 }
 
+void writeMessageToFile(TMessage message, int fileDescriptor) {
+    char *str = getJsonStr(message);
+
+    printToFile(str, fileDescriptor);
+    printToFile("\n", fileDescriptor);
+
+    free(str);
+}

@@ -7,11 +7,14 @@
 #include <unistd.h>
 #include "errno.h"
 #include <string.h>
+#include <stdlib.h>
+#include "file-manager.h"
+#include <stdint.h>
 
 TimeQueue *createTimeQueue() {
     TimeQueue *queue = (TimeQueue *) malloc(sizeof(TimeQueue));
     queue->first = NULL;
-    queue->array = NULL;
+//    queue->array = NULL;
     queue->count = 0;
     pthread_mutex_init(&queue->mutex, NULL);
 
@@ -25,12 +28,12 @@ void addTime(TimeQueue *queue, struct timespec first, struct timespec second) {
 
     pthread_mutex_lock(&queue->mutex);
 
-    if (queue->count == 0) {
-        queue->array = (long *) calloc(1, sizeof(long));
-    } else {
-        queue->array = realloc(queue->array, queue->count + 1);
-        queue->array[queue->count] = time;
-    }
+//    if (queue->count == 0) {
+//        queue->array = (long *) calloc(1, sizeof(long));
+//    } else {
+//        queue->array = (long *) realloc(queue->array, queue->count + 1);
+//        queue->array[queue->count] = time;
+//    }
     queue->count++;
     item->next = queue->first;
     queue->first = item;
@@ -50,11 +53,13 @@ struct timespec *getTime() {
 }
 
 void printTimesToFile(TimeQueue queue, int fileDescriptor) {
-    char *str = (char *) calloc(1024 * 1024, sizeof(char));
+    char *str = (char *) calloc(1024, sizeof(char));
     size_t size = 0;
 
+    long *array = toArray(queue);
+
     for (long i = 0; i < queue.count; i++) {
-        sprintf(str, "%ld", queue.array[i]);
+        sprintf(str, "%ld", array[i]);
         size_t length = strlen(str);
         while (size != length) {
             size_t s = write(fileDescriptor, str + size, length - size);
@@ -63,14 +68,15 @@ void printTimesToFile(TimeQueue queue, int fileDescriptor) {
             }
             size += s;
         }
-
     }
+
+    free(str);
 }
 
 void destroyTimeQueue(TimeQueue *queue) {
-    if (queue->count > 0) {
-        free(queue->array);
-    }
+//    if (queue->count > 0) {
+//        free(queue->array);
+//    }
     struct Item *item;
 
     while (queue->first != NULL) {
@@ -83,3 +89,15 @@ void destroyTimeQueue(TimeQueue *queue) {
     free(queue);
 }
 
+long *toArray(TimeQueue queue) {
+    if (queue.count == 0) {
+        return NULL;
+    }
+
+    long *result = (long *) calloc(queue.count, sizeof(long));
+    struct Item *item = queue.first;
+
+    for (uint64_t i = 0; i < queue.count; i++) {
+        
+    }
+}

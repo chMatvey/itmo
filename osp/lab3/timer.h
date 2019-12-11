@@ -11,6 +11,7 @@
 
 #include <pthread.h>
 #include <time.h>
+#include <stdint.h>
 
 struct Item {
     long value;
@@ -18,13 +19,14 @@ struct Item {
 };
 
 typedef struct {
-    long count;
+    uint64_t count;
     struct Item *first;
     pthread_mutex_t mutex;
-    long *array;
+//    long *array;
 } TimeQueue;
 
 TimeQueue *readTimes;
+TimeQueue *inQueueTimes;
 TimeQueue *executionTimes;
 TimeQueue *writeTimes;
 
@@ -37,3 +39,5 @@ struct timespec *getTime();
 void printTimesToFile(TimeQueue queue, int fileDescriptor);
 
 void destroyTimeQueue(TimeQueue *queue);
+
+long *toArray(TimeQueue queue);
