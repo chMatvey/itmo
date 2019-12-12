@@ -3,11 +3,12 @@
 #include <string.h>
 #include <pthread.h>
 #include "handler.h"
-#include "lock-queueTest.h"
+#include "lock-queue.h"
 #include <execinfo.h>
 #include <unistd.h>
 #include <signal.h>
 #include <fcntl.h>
+#include "errno.h"
 #include "timer.h"
 
 #include "test/messageTest.h"
@@ -28,8 +29,13 @@ void handler(int sig) {
     _exit(1);
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     signal(SIGSEGV, handler);
+
+    if (argc < 2) {
+        printf("Arguments must be: <strategy-type | test>\n");
+        return EINVAL;
+    }
 
     lockQueue = createLockQueue();
     readTimes = createTimeQueue();
@@ -37,43 +43,58 @@ int main() {
     executionTimes = createTimeQueue();
     writeTimes = createTimeQueue();
 
-//    messageTest();
-//    lockQueueTest();
-//    handlerTest();
-//    timerTest();
+    if (strcmp(argv[1], "test") == 0) {
+        messageTest();
+        lockQueueTest();
+        handlerTest();
+        timerTest();
+    } else {
+        StrategyType strategyType;
 
-    pthread_t reader_tid; /* идентификатор потока */
-    pthread_attr_t reader_attr; /* отрибуты потока */
+        if (strcmp(argv[1], "per_thread") == 0) {
+            strategyType = PER_THREAD;
+        } else if (strcmp(argv[1], "per_task") == 0) {
+            strategyType = PER_TASK;
+        } else if (strcmp(argv[1], "thread_pool") == 0) {
+            strategyType = THREAD_POOL;
+        } else {
+            printf("Strategy-type must be: per_thread | per_task | thread_pool\n");
+            return EINVAL;
+        }
 
-    pthread_t writer_tid; /* идентификатор потока */
-    pthread_attr_t writer_attr; /* отрибуты потока */
+        pthread_t reader_tid; /* идентификатор потока */
+        pthread_attr_t reader_attr; /* отрибуты потока */
 
-    /* получаем дефолтные значения атрибутов */
-    pthread_attr_init(&reader_attr);
-    pthread_attr_init(&writer_attr);
+        pthread_t writer_tid; /* идентификатор потока */
+        pthread_attr_t writer_attr; /* отрибуты потока */
 
-    /* создаем новый поток */
-    pthread_create(&reader_tid, &reader_attr, reader_thread, (void *) PER_THREAD);
-    pthread_create(&writer_tid, &writer_attr, writer_thread, NULL);
+        /* получаем дефолтные значения атрибутов */
+        pthread_attr_init(&reader_attr);
+        pthread_attr_init(&writer_attr);
 
-    /* ждем завершения исполнения потока */
-    pthread_join(reader_tid, NULL);
-    pthread_join(writer_tid, NULL);
+        /* создаем новый поток */
+        pthread_create(&reader_tid, &reader_attr, reader_thread, (void *) strategyType);
+        pthread_create(&writer_tid, &writer_attr, writer_thread, NULL);
 
-    int readTimesFile = open("../read", O_WRONLY | O_CREAT, 00700);
-    int inQueueFile = open("../queue", O_WRONLY | O_CREAT, 00700);
-    int executionTimesFile = open("../execution", O_WRONLY | O_CREAT, 00700);
-    int writeTimesFIle = open("../writte", O_WRONLY | O_CREAT, 00700);
+        /* ждем завершения исполнения потока */
+        pthread_join(reader_tid, NULL);
+        pthread_join(writer_tid, NULL);
 
-    printTimesToFile(*readTimes, readTimesFile);
-    printTimesToFile(*inQueueTimes, inQueueFile);
-    printTimesToFile(*executionTimes, executionTimesFile);
-    printTimesToFile(*writeTimes, writeTimesFIle);
+        int readTimesFile = open("../read", O_WRONLY | O_CREAT, 00700);
+        int inQueueFile = open("../queue", O_WRONLY | O_CREAT, 00700);
+        int executionTimesFile = open("../execution", O_WRONLY | O_CREAT, 00700);
+        int writeTimesFIle = open("../writte", O_WRONLY | O_CREAT, 00700);
 
-    close(readTimesFile);
-    close(inQueueFile);
-    close(executionTimesFile);
-    close(writeTimesFIle);
+        printTimesToFile(*readTimes, readTimesFile);
+        printTimesToFile(*inQueueTimes, inQueueFile);
+        printTimesToFile(*executionTimes, executionTimesFile);
+        printTimesToFile(*writeTimes, writeTimesFIle);
+
+        close(readTimesFile);
+        close(inQueueFile);
+        close(executionTimesFile);
+        close(writeTimesFIle);
+    }
 
     destroyQueue(lockQueue);
     destroyTimeQueue(readTimes);

@@ -28,6 +28,12 @@ typedef struct {
 
 LockQueue *lockQueue;
 
+LockQueue *fibonacciLockQueue;
+
+LockQueue *powLockQueue;
+
+LockQueue *sortLockQueue;
+
 LockQueue *createLockQueue();
 
 void addItem(LockQueue *queue, TMessage *message);
