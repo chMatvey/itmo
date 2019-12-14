@@ -1,0 +1,9 @@
+s225141=
+    (DESCRIPTION=
+        (ADDRESS_LIST=
+            (ADDRESS=(PROTOCOL=tcp)(HOST=localhost)(PORT=1521))
+        )
+        (CONNECT_DATA=
+            (SERVICE_NAME=s225141)
+        )
+    )
