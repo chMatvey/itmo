@@ -11,6 +11,7 @@
 #include <fcntl.h>
 #include "message.h"
 #include "timer.h"
+#include <pthread.h>
 
 const int buffer_size = 1024 * 1024;
 
@@ -141,6 +142,7 @@ void pool_strategy(long countThreads) {
             addItem(lockQueue, msg);
         } else {
             addItem(pool->taskQueue, msg);
+            //addItem(taskQueue, msg);
         }
     }
 
@@ -311,12 +313,13 @@ ThreadPool *createThreadPool(uint8_t threadCount) {
     pool->threadCount = threadCount;
     pool->taskQueue = createLockQueue();
     pool->firstThread = NULL;
+    pthread_cond_init(&pool->nonTasks, NULL);
 
     for (uint8_t i = 0; i < threadCount; i++) {
         pthread_t tid;
         pthread_attr_t attr;
         pthread_attr_init(&attr);
-        pthread_create(&tid, &attr, per_pool, pool->taskQueue);
+        pthread_create(&tid, &attr, per_pool, pool);
 
         struct ThreadItem *item = (struct ThreadItem *) malloc(sizeof(struct ThreadItem));
         item->tid = tid;
@@ -330,32 +333,31 @@ ThreadPool *createThreadPool(uint8_t threadCount) {
 void destroyThreadPool(ThreadPool *pool) {
     struct ThreadItem *item;
 
-    while (pool->firstThread != NULL) {
-        TMessage *stop = (TMessage *) malloc(sizeof(TMessage));
-        *stop = createStop();
-        addItem(pool->taskQueue, stop);
+    while (pool->taskQueue->count != 0) {
+        pthread_cond_wait(&pool->nonTasks, &pool->taskQueue->mutex);
+    }
 
+    while (pool->firstThread != NULL) {
         item = pool->firstThread;
         pool->firstThread = pool->firstThread->next;
+        pthread_cancel(item->tid);
 
         free(item);
     }
-
 
     destroyQueue(pool->taskQueue);
     free(pool);
 }
 
 void *per_pool(void *param) {
-    LockQueue *taskQueue = (LockQueue *) param;
+    ThreadPool *pool = (ThreadPool *) param;
     int wasStopMsg = 0;
 
     while (!wasStopMsg) {
-        TMessage *message = getItem(taskQueue);
+        TMessage *message = getItem(pool->taskQueue);
 
         if (message->type == STOP) {
             wasStopMsg = 1;
-            free(message);
         } else {
             struct timespec *start = getTime();
             fibonacci(message->data[0]);
@@ -366,6 +368,10 @@ void *per_pool(void *param) {
 
             free(start);
             free(finish);
+        }
+
+        if (getCount(pool->taskQueue) == 0) {
+            pthread_cond_signal(&pool->nonTasks);
         }
     }
 

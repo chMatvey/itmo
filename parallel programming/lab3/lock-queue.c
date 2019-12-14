@@ -73,7 +73,9 @@ void destroyQueue(LockQueue *queue) {
         item = queue->first;
         queue->first = queue->first->next;
 
-        free(item->message->data);
+        if (item->message->type != STOP) {
+            free(item->message->data);
+        }
         free(item->message);
         free(item);
     }

@@ -52,6 +52,7 @@ typedef struct {
     uint8_t threadCount;
     struct ThreadItem *firstThread;
     LockQueue *taskQueue;
+    pthread_cond_t nonTasks;
 } ThreadPool;
 
 ThreadPool *createThreadPool(uint8_t threadCount);

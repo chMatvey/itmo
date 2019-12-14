@@ -4,10 +4,16 @@
 
 #include "handlerTest.h"
 #include "../handler.h"
-
-void writeToFileTest() {
-}
+#include <assert.h>
 
 void handlerTest() {
-    writeToFileTest();
+    createThreadPoolTest();
+}
+
+void createThreadPoolTest() {
+    ThreadPool *pool = createThreadPool(5);
+
+    assert(pool->threadCount == 5);
+
+    destroyThreadPool(pool);
 }

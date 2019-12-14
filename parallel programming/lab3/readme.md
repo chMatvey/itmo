@@ -15,6 +15,7 @@ build jar-file from https://github.com/chMatvey/itmo/tree/master/osp/random-numb
 ###run:
    
     java -jar generator-jar-with-dependencies.jar -uniform 1 255 | ./a per_thread
+    java -jar generator-jar-with-dependencies.jar -exponential 1 255 | ./a thread_pool 10
     
 ###test:
 
