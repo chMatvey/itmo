@@ -3,30 +3,17 @@
 #include <string.h>
 #include <pthread.h>
 #include "handler.h"
-#include "lock-queue.h"
+#include "lock-queueTest.h"
 #include <execinfo.h>
 #include <unistd.h>
 #include <signal.h>
+#include <fcntl.h>
+#include "timer.h"
 
-//#include "test/messageTest.h"
-//#include "test/lock-queueTest.h"
-//#include "test/handlerTest.h"
-
-char *readFromFile(char *filename) {
-    FILE *f = fopen(filename, "rb");
-    fseek(f, 0, SEEK_END);
-    long fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
-
-    char *string = malloc(fsize + 1);
-    fread(string, 1, fsize, f);
-    fclose(f);
-    free(f);
-
-    string[fsize] = 0;
-
-    return string;
-}
+#include "test/messageTest.h"
+#include "test/lock-queueTest.h"
+#include "test/handlerTest.h"
+#include "test/timerTest.h"
 
 void handler(int sig) {
     void *array[10];
@@ -42,12 +29,20 @@ void handler(int sig) {
 }
 
 int main() {
-//    messageTest();
-//    lockQueueTest();
-//    handlerTest();
     signal(SIGSEGV, handler);
 
+    messageTest();
+    lockQueueTest();
+    handlerTest();
+    timerTest();
+
+    return 1;
+
     lockQueue = createLockQueue();
+    readTimes = createTimeQueue();
+    inQueueTimes = createTimeQueue();
+    executionTimes = createTimeQueue();
+    writeTimes = createTimeQueue();
 
     pthread_t reader_tid; /* идентификатор потока */
     pthread_attr_t reader_attr; /* отрибуты потока */
@@ -67,5 +62,21 @@ int main() {
     pthread_join(reader_tid, NULL);
     pthread_join(writer_tid, NULL);
 
+    int readTimesFile = open("../read", O_WRONLY | O_CREAT, 00700);
+    int executionTimesFile = open("../execution", O_WRONLY | O_CREAT, 00700);
+    int writeTimesFIle = open("../writte", O_WRONLY | O_CREAT, 00700);
+
+    printTimesToFile(*readTimes, readTimesFile);
+    printTimesToFile(*executionTimes, executionTimesFile);
+    printTimesToFile(*writeTimes, writeTimesFIle);
+
+    close(readTimesFile);
+    close(executionTimesFile);
+    close(writeTimesFIle);
+
     destroyQueue(lockQueue);
+    destroyTimeQueue(readTimes);
+    destroyTimeQueue(inQueueTimes);
+    destroyTimeQueue(executionTimes);
+    destroyTimeQueue(writeTimes);
 }

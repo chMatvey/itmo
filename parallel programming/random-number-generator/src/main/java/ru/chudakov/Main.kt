@@ -21,8 +21,8 @@ open class Main {
             val param1: Int = args[1].toInt()
             val param2: Int = args[2].toInt()
 
-            if (param1 < 1 || param1 > 255 || param2 < 1 || param2 > 255) {
-                error("Params must be more 0 and less 256")
+            if (param1 < 1 || param2 < 1) {
+                error("Params must be more 0")
             }
 
             val generator = Generator()

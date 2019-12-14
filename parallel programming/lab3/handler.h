@@ -19,8 +19,6 @@ typedef enum {
 
 void *reader_thread(void *param);
 
-void writeToFile(TMessage message, int fileDescriptor);
-
 void *writer_thread(void *param);
 
 void *per_thread(void *param);
