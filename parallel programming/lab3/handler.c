@@ -6,12 +6,10 @@
 #include <stdio.h>
 #include <malloc.h>
 #include <string.h>
-#include <pthread.h>
 #include <unistd.h>
 #include <asm/errno.h>
 #include <fcntl.h>
 #include "message.h"
-#include "lock-queue.h"
 #include "timer.h"
 
 const int buffer_size = 1024 * 1024;
@@ -118,19 +116,49 @@ void task_strategy() {
     free(string);
 }
 
-void pool_strategy() {
+void pool_strategy(long countThreads) {
+    ThreadPool *pool = createThreadPool(countThreads);
 
+    char *string = calloc(buffer_size, sizeof(char));
+    int wasStopMsg = 0;
+
+    while (!wasStopMsg) {
+        struct timespec *start = getTime();
+        fgets(string, buffer_size, stdin);
+        printf("%s\n", string);
+        TMessage *msg = (TMessage *) malloc(sizeof(TMessage));
+        *msg = createMessage(string);
+        struct timespec *finish = getTime();
+
+        addTime(readTimes, *start, *finish);
+
+        free(start);
+        free(finish);
+
+        if (msg->type == STOP) {
+            wasStopMsg = 1;
+            destroyThreadPool(pool);
+            addItem(lockQueue, msg);
+        } else {
+            addItem(pool->taskQueue, msg);
+        }
+    }
+
+    free(string);
 }
 
 void *reader_thread(void *param) {
-    StrategyType sType = (StrategyType) param;
+    ThreadParam *threadParam = (ThreadParam *) param;
 
-    if (sType == PER_THREAD) {
+    printf("%u", threadParam->strategyType);
+    printf("%ld", threadParam->data);
+
+    if (threadParam->strategyType == PER_THREAD) {
         thread_strategy();
-    } else if (sType == PER_TASK) {
+    } else if (threadParam->strategyType == PER_TASK) {
         task_strategy();
-    } else if (sType == THREAD_POOL) {
-        pool_strategy();
+    } else if (threadParam->strategyType == THREAD_POOL) {
+        pool_strategy(threadParam->data);
     } else {
         TMessage msg = createStop();
         addItem(lockQueue, &msg);
@@ -265,6 +293,72 @@ void *per_task_sort(void *param) {
         } else {
             struct timespec *start = getTime();
             bubbleSort(message->data, message->size);
+            struct timespec *finish = getTime();
+
+            addItem(lockQueue, message);
+            addTime(executionTimes, *start, *finish);
+
+            free(start);
+            free(finish);
+        }
+    }
+
+    pthread_exit(0);
+}
+
+ThreadPool *createThreadPool(uint8_t threadCount) {
+    ThreadPool *pool = (ThreadPool *) malloc(sizeof(ThreadPool));
+    pool->threadCount = threadCount;
+    pool->taskQueue = createLockQueue();
+    pool->firstThread = NULL;
+
+    for (uint8_t i = 0; i < threadCount; i++) {
+        pthread_t tid;
+        pthread_attr_t attr;
+        pthread_attr_init(&attr);
+        pthread_create(&tid, &attr, per_pool, pool->taskQueue);
+
+        struct ThreadItem *item = (struct ThreadItem *) malloc(sizeof(struct ThreadItem));
+        item->tid = tid;
+        item->next = pool->firstThread;
+        pool->firstThread = item;
+    }
+
+    return pool;
+}
+
+void destroyThreadPool(ThreadPool *pool) {
+    struct ThreadItem *item;
+
+    while (pool->firstThread != NULL) {
+        TMessage *stop = (TMessage *) malloc(sizeof(TMessage));
+        *stop = createStop();
+        addItem(pool->taskQueue, stop);
+
+        item = pool->firstThread;
+        pool->firstThread = pool->firstThread->next;
+
+        free(item);
+    }
+
+
+    destroyQueue(pool->taskQueue);
+    free(pool);
+}
+
+void *per_pool(void *param) {
+    LockQueue *taskQueue = (LockQueue *) param;
+    int wasStopMsg = 0;
+
+    while (!wasStopMsg) {
+        TMessage *message = getItem(taskQueue);
+
+        if (message->type == STOP) {
+            wasStopMsg = 1;
+            free(message);
+        } else {
+            struct timespec *start = getTime();
+            fibonacci(message->data[0]);
             struct timespec *finish = getTime();
 
             addItem(lockQueue, message);
