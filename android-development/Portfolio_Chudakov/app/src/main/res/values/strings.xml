@@ -2,4 +2,7 @@
     <string name="app_name">Portfolio_Chudakov</string>
     <string name="about_me">About me</string>
     <string name="study">Study</string>
+    <string name="job">Job</string>
+    <string name="plans">Plans</string>
+    <string name="contacts">Contacts</string>
 </resources>
