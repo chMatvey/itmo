@@ -1,6 +1,13 @@
 <resources>
     <string name="app_name">Lab6_Chudakov</string>
     <string name="menu_home">Home</string>
+    <string name="menu_playlist_features">Android Studio 3.5 Features</string>
+    <string name="menu_playlist_patterns">Android Development Patterns</string>
+    <string name="menu_playlist_stories">Android Developer Stories</string>
+    <string name="features">Features</string>
+    <string name="patterns">Patterns</string>
+    <string name="stories">Stories</string>
     <string name="menu_info">Info</string>
-    <string name="menu_playlist">playlist</string>
+    <string name="home_content">Welcome to YouTube playlist application</string>
+    <string name="info_content">This is application with android tutorial videos</string>
 </resources>
