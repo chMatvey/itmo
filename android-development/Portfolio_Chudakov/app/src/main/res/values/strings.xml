@@ -1,8 +1,17 @@
 <resources>
     <string name="app_name">Portfolio_Chudakov</string>
-    <string name="about_me">About me</string>
-    <string name="study">Study</string>
-    <string name="job">Job</string>
-    <string name="plans">Plans</string>
-    <string name="contacts">Contacts</string>
+    <string name="about_me">Обо мне</string>
+    <string name="study">Учёба</string>
+    <string name="job">Работа</string>
+    <string name="plans">Планы</string>
+    <string name="contacts">Контакты</string>
+    <string name="profileName">Чудаков Матвей</string>
+    <string name="description">Студент 4-го курса ИТМО</string>
+    <string name="schoolName">Университет ИТМО</string>
+    <string name="studyYears">2016-2020</string>
+    <string name="sdudyDirection">Программная инженерия</string>
+    <string name="gmail">matvey159@gmail.com</string>
+    <string name="vk">https://vk.com/id145659792</string>
+    <string name="github">https://github.com/chMatvey</string>
+    <string name="telegram">\@matveyChudakov</string>
 </resources>

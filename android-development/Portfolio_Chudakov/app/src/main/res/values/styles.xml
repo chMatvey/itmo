@@ -18,4 +18,12 @@
         <item name="android:textColor">#F2F2F2</item>
     </style>
 
+    <style name="BackgroundWhite">
+        <item name="android:background">#FFFFFF</item>
+    </style>
+
+    <style name="BackgroundGrey">
+        <item name="android:background">#F2F2F2</item>
+    </style>
+
 </resources>
