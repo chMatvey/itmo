@@ -1,8 +1,20 @@
-#!/usr/bin/env bash
+ssh-keygen -t rsa
+cat ~/.ssh/id_rsa.pub | ssh oracle@db146 "mkdir -p ~/.ssh && touch ~/.ssh/authorized_keys && chmod -R go= ~/.ssh && cat >> ~/.ssh/authorized_keys"
 
-scp -r /u01/yak27 oracle@db197:/u01/yak27
-scp -r /u01/app/oracle/product/11.2.0/dbhome_1/dbs/inits225141.ora oracle@db197:/u01/app/oracle/product/11.2.0/dbhome_1/dbs/inits225141.ora
-//scp -r /u01/app/oracle/admin/orcl/adump oracle@db197:/u01/app/oracle/admin/orcl/adump
-scp -r /u01/app/oracle/flash_recovery_area oracle@db197:/u01/app/oracle/flash_recovery_area
-scp /u01/app/oracle/product/11.2.0/dbhome_1/dbs/inits225141.ora oracle@db197:/u01/app/oracle/product/11.2.0/dbhome_1/dbs/inits225141.ora
-scp /u01/init.sh oracle@db197:/u01/init.sh
+ssh-keygen -t rsa
+cat ~/.ssh/id_rsa.pub | ssh oracle@db197 "mkdir -p ~/.ssh && touch ~/.ssh/authorized_keys && chmod -R go= ~/.ssh && cat >> ~/.ssh/authorized_keys"
+
+rm -rf adump/*
+rm -rf logs/*
+
+alter tablespace COOL_GOLD_DISK offline immediate;
+cd $ORADATA/node02
+rm coolgolddisk01.dbf
+alter tablespace COOL_GOLD_DISK online immediate;
+
+echo "startup nomount
+alter database mount standby database;
+recover standby database;
+auto
+shutdown immediate;
+exit;" > recover.sql

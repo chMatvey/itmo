@@ -13,8 +13,9 @@ dispatchers='(PROTOCOL=TCP) (SERVICE=ORCLXDB)'
 open_cursors=300
 remote_login_passwordfile='EXCLUSIVE'
 undo_tablespace='UNDOTBS1'
-control_files='/u01/yak27/bestmeat/ctrlcp1.ctl'
-LOG_ARCHIVE_DEST_1='LOCATION=/u01/yak27/logs/'
-LOG_ARCHIVE_DEST_STATE_1=ENABLE
-LOG_ARCHIVE_FORMAT=%t_%s_%r.arc
+control_files=(ora_control1,ora_control2)
+log_archive_dest_1='LOCATION=/u01/yak27/logs/'
+log_archive_dest_state_1=ENABLE
+log_archive_format='%t_%s_%r.arc'
+compatible ='11.2.0'
 STANDBY_FILE_MANAGEMENT=AUTO

@@ -1,0 +1,18 @@
+db_name='bestmeat'
+memory_target=1G
+sga_target=430M
+processes=150
+audit_file_dest='/u01/app/oracle/admin/orcl/adump'
+audit_trail='db'
+db_block_size=8192
+diagnostic_dest='/u01/app/oracle'
+dispatchers='(PROTOCOL=TCP) (SERVICE=ORCLXDB)'
+remote_login_passwordfile='EXCLUSIVE'
+open_cursors=300
+undo_tablespace='UNDOTBS1'
+log_archive_dest_1='LOCATION=/u01/yak27/logs/'
+log_archive_dest_state_1=ENABLE
+log_archive_format=%t_%s_%r.arc
+control_files='/u01/app/oracle/product/11.2.0/dbhome_1/dbs/ctrl.ctl'
+STANDBY_FILE_MANAGEMENT=AUTO
+compatible ='11.2.0'
