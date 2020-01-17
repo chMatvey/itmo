@@ -11,20 +11,25 @@ build jar-file from https://github.com/chMatvey/itmo/tree/master/osp/random-numb
 ### build:
 
     make
+    
+### run
 
-### run with pipe:
-   
-    java -jar generator-jar-with-dependencies.jar -uniform 1 255 | ./a per_thread
-    java -jar generator-jar-with-dependencies.jar -exponential 1 255 | ./a thread_pool 10
+    cmake-build-debug/lab3
+    cmake-build-debug/lab3 per_thread
+    cmake-build-debug/lab3 per_task
+    cmake-build-debug/lab3 thread_pool 10
     
 ### test:
 
-    java -jar generator-jar-with-dependencies.jar -uniform 1 255 | ./a test
+    cmake-build-debug/lab3 test
     
 ### valgrind:
 
-    java -jar generator-jar-with-dependencies.jar -uniform 1 25 | valgrind ./a per_thread
-    java -jar generator-jar-with-dependencies.jar -uniform 1 25 | valgrind --leak-check=full --show-leak-kinds=all -v ./a per_thread
+    valgrind cmake-build-debug/lab3
+    valgrind --leak-check=full --show-leak-kinds=all -v cmake-build-debug/lab3
+    valgrind --leak-check=full --show-leak-kinds=all -v cmake-build-debug/lab3 per_thread
+    valgrind --leak-check=full --show-leak-kinds=all -v cmake-build-debug/lab3 per_task
+    valgrind --leak-check=full --show-leak-kinds=all -v cmake-build-debug/lab3 thread_pool 10
 
 ### test-coverage, install package:
     

@@ -1,7 +1,7 @@
 all: a
 
-a: main.o handler.o lock-queue.o message-manager.o timer.o file-manager.o client-handler.o message.pb.o flags.o handlerTest.o lock-queueTest.o messageTest.o timerTest.o
-	g++ I /home/matvey/Documents/itmo/parallel-programming/lab3/protobuf -pthread -lprotobuf -g -rdynamic -ggdb -O0 -Wall main.o handler.o lock-queue.o message-manager.o timer.o file-manager.o client-handler.o message.pb.o flags.o handlerTest.o lock-queueTest.o messageTest.o timerTest.o -o a
+a: main.o handler.o lock-queue.o message-manager.o timer.o file-manager.o client-handler.o message.o flags.o handlerTest.o lock-queueTest.o messageTest.o timerTest.o
+	g++ -o main.o handler.o lock-queue.o message-manager.o timer.o file-manager.o client-handler.o message.o flags.o handlerTest.o lock-queueTest.o messageTest.o timerTest.o -Wall -Wextra -std=gnu99 -pedantic -Werror -pthread -lprotobuf -coverage -fprofile-arcs -ftest-coverage -lgcov
 
 main.o: main.c
 	gcc -c main.c
@@ -22,10 +22,10 @@ file-manager.o: file-manager.c
 	gcc -c file-manager.c
 
 client-handler.o: client-handler.cpp
-	g++ -c client-handler.cpp
-
-message.pb.o: proto/message.pb.cc
-	g++ -c -lprotobuf proto/message.pb.cc
+	g++ -c client-handler.cpp -lprotobuf 
+ 
+message.o: proto/message.pb.cc
+	g++ -c proto/message.pb.cc -o message.o -lprotobuf 
 
 flags.o: flags.cpp
 	g++ -c flags.cpp

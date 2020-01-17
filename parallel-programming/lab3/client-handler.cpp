@@ -22,9 +22,6 @@ TMessage createMessageByProto(EType type, uint64_t size, uint8_t *data) {
 extern "C" void client_handler(struct mg_connection *conn, int ev, void *p) {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    struct mbuf *io = &conn->send_mbuf;
-    static int a = 1;
-
     if (ev == MG_EV_RECV) {
         lab3::TMessage receivedMsg = lab3::TMessage();
         receivedMsg.ParseFromString((&conn->recv_mbuf)->buf);
@@ -51,6 +48,8 @@ extern "C" void client_handler(struct mg_connection *conn, int ev, void *p) {
         for (uint64_t i = msg->size; i < msg->size + receivedMsg.data_size(); i++) {
             msg->data[i] = receivedMsg.data(i - msg->size);
         }
+
+        receivedMsg.Clear();
     } else if (ev == MG_EV_CLOSE) {
         setMsg((TMessage *) conn->user_data);
         dropFlag();

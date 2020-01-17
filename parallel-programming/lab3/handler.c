@@ -26,8 +26,8 @@ int thread_strategy() {
 
         if (nc != NULL) {
             printf("Getting message...\n");
+            struct timespec *start = getTime();
             for (;;) {
-                struct timespec *start = getTime();
                 mg_mgr_poll(&mgr, 1000);
                 if (getFlag() == 0) {
                     continue;
@@ -38,7 +38,12 @@ int thread_strategy() {
                     free(start);
                     free(finish);
 
-                    if (msg->type == STOP) {
+                    if (msg == NULL) {
+                        msg = (TMessage *) malloc(sizeof(TMessage));
+                        *msg = createStop();
+                        wasStopMsg = 1;
+                        addItem(lockQueue, msg);
+                    } else if (msg->type == STOP) {
                         wasStopMsg = 1;
                         addItem(lockQueue, msg);
                     } else {
@@ -56,6 +61,7 @@ int thread_strategy() {
             return 1;
         }
 
+        mg_mgr_free(&mgr);
         setFlag();
     }
 
@@ -93,8 +99,8 @@ int task_strategy() {
 
         if (nc != NULL) {
             printf("Getting message...\n");
+            struct timespec *start = getTime();
             for (;;) {
-                struct timespec *start = getTime();
                 mg_mgr_poll(&mgr, 1000);
                 if (getFlag() == 0) {
                     continue;
@@ -105,13 +111,12 @@ int task_strategy() {
                     free(start);
                     free(finish);
 
-                    if (msg->type == FIBONACCI) {
-                        addItem(fibonacciLockQueue, msg);
-                    } else if (msg->type == POW) {
-                        addItem(powLockQueue, msg);
-                    } else if (msg->type == BUBBLE_SORT_UINT64) {
-                        addItem(sortLockQueue, msg);
-                    } else {
+                    if (msg == NULL || msg->type == STOP) {
+                        if (msg == NULL) {
+                            msg = (TMessage *) malloc(sizeof(TMessage));
+                            *msg = createStop();
+                        }
+
                         wasStopMsg = 1;
                         TMessage *stopFibonacci = (TMessage *) malloc(sizeof(TMessage));
                         TMessage *stopPow = (TMessage *) malloc(sizeof(TMessage));
@@ -125,6 +130,12 @@ int task_strategy() {
                         addItem(powLockQueue, stopPow);
                         addItem(sortLockQueue, stopSort);
                         addItem(lockQueue, msg);
+                    } else if (msg->type == FIBONACCI) {
+                        addItem(fibonacciLockQueue, msg);
+                    } else if (msg->type == POW) {
+                        addItem(powLockQueue, msg);
+                    } else if (msg->type == BUBBLE_SORT_UINT64) {
+                        addItem(sortLockQueue, msg);
                     }
 
                     break;
@@ -134,6 +145,7 @@ int task_strategy() {
             return 1;
         }
 
+        mg_mgr_free(&mgr);
         setFlag();
     }
 
@@ -161,8 +173,8 @@ int pool_strategy(long countThreads) {
 
         if (nc != NULL) {
             printf("Getting message...\n");
+            struct timespec *start = getTime();
             for (;;) {
-                struct timespec *start = getTime();
                 mg_mgr_poll(&mgr, 1000);
                 if (getFlag() == 0) {
                     continue;
@@ -173,7 +185,12 @@ int pool_strategy(long countThreads) {
                     free(start);
                     free(finish);
 
-                    if (msg->type == STOP) {
+                    if (msg == NULL) {
+                        msg = (TMessage *) malloc(sizeof(TMessage));
+                        *msg = createStop();
+                        wasStopMsg = 1;
+                        addItem(lockQueue, msg);
+                    } else if (msg->type == STOP) {
                         wasStopMsg = 1;
                         destroyThreadPool(pool);
                         addItem(lockQueue, msg);
@@ -188,6 +205,7 @@ int pool_strategy(long countThreads) {
             return 1;
         }
 
+        mg_mgr_free(&mgr);
         setFlag();
     }
 
