@@ -2,7 +2,7 @@
 // Created by matvey on 25.11.2019.
 //
 
-#include "message.h"
+#include "message-manager.h"
 #include "cJSON/cJSON.h"
 #include "cJSON/cJSON.c"
 #include <stdint.h>
@@ -57,7 +57,7 @@ TMessage createFibonacci(uint8_t n) {
     TMessage message;
     message.type = FIBONACCI;
     message.size = 1;
-    message.data = calloc(message.size, sizeof(uint8_t));
+    message.data = (uint8_t *) calloc(message.size, sizeof(uint8_t));
     message.data[0] = n;
 
     return message;
@@ -67,7 +67,7 @@ TMessage createPower(uint8_t basis, uint8_t exponent) {
     TMessage message;
     message.type = POW;
     message.size = 2;
-    message.data = calloc(message.size, sizeof(uint8_t));
+    message.data = (uint8_t *) calloc(message.size, sizeof(uint8_t));
     message.data[0] = basis;
     message.data[1] = exponent;
 
@@ -103,7 +103,7 @@ TMessage createMessage(char *string) {
         message = createPower(basic, exponent);
     } else if (strcmp(json->child->valuestring, "BUBBLE_SORT") == 0) {
         uint64_t size = json->child->next->valueint;
-        uint8_t *array = calloc(size, sizeof(uint8_t));
+        uint8_t *array = (uint8_t *) calloc(size, sizeof(uint8_t));
         uint64_t i = 0;
 
         while (data != NULL) {
@@ -122,7 +122,7 @@ TMessage createMessage(char *string) {
     return message;
 }
 
-char *getMessageTypeStr(EType type) {
+char *getMessageTypeStr(uint8_t type) {
     if (type == FIBONACCI) {
         return "FIBONACCI";
     } else if (type == POW) {

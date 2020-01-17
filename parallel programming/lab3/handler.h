@@ -4,7 +4,7 @@
 
 #include <pthread.h>
 #include "lock-queue.h"
-#include "message.h"
+#include "message-manager.h"
 
 
 #ifndef LAB3_HANDLER_H
@@ -25,11 +25,11 @@ typedef struct {
     long data;
 } ThreadParam;
 
-void thread_strategy();
+int thread_strategy();
 
-void task_strategy();
+int task_strategy();
 
-void pool_strategy(long countThreads);
+int pool_strategy(long countThreads);
 
 void *reader_thread(void *param);
 

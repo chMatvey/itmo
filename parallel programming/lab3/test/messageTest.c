@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <malloc.h>
 #include <string.h>
-#include "../message.h"
+#include "../message-manager.h"
 
 void powerTest() {
     assert(power(4, 2) == 16);
@@ -23,7 +23,7 @@ void fibonacciTest() {
 }
 
 void bubbleSortTest() {
-    uint8_t *array = calloc(4, sizeof(uint8_t));
+    uint8_t *array = (uint8_t *) calloc(4, sizeof(uint8_t));
     array[0] = 4;
     array[1] = 3;
     array[2] = 2;
@@ -62,7 +62,7 @@ void createPowerTest() {
 
 void createBubbleSortTest() {
     int size = 4;
-    uint8_t *array = calloc(size, sizeof(uint8_t));
+    uint8_t *array = (uint8_t *) calloc(size, sizeof(uint8_t));
     array[0] = 4;
     array[1] = 3;
     array[2] = 2;
@@ -105,7 +105,7 @@ void createMessageTest() {
 
 void getJsonStrTest() {
     int size = 2;
-    uint8_t *array = calloc(size, sizeof(uint8_t));
+    uint8_t *array = (uint8_t *) calloc(size, sizeof(uint8_t));
     array[0] = 4;
     array[1] = 3;
 

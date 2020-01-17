@@ -2,3 +2,5 @@
 target
 random-number-generator.iml
 *.exe
+
+src/main/java/ru/chudakov/proto/MessageProto.java

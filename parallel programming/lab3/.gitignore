@@ -2,6 +2,7 @@ cmake-build-debug
 cJSON
 report
 protobuf
+protobuf_simply
 
 *.jar
 *.o
@@ -11,5 +12,8 @@ protobuf
 
 a
 coverage
-
 result
+
+proto/message.pb.cc
+proto/message.pb.h
+

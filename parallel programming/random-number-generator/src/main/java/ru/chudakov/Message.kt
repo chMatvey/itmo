@@ -1,5 +1,7 @@
 package ru.chudakov
 
+import ru.chudakov.proto.MessageProto
+
 data class Message(
         val type: MessageType,
         val size: Long,
@@ -23,5 +25,14 @@ data class Message(
         result = 31 * result + size.hashCode()
         result = 31 * result + data.contentHashCode()
         return result
+    }
+}
+
+fun getProtoEType(type: MessageType): MessageProto.EType {
+    return when (type) {
+        MessageType.FIBONACCI -> MessageProto.EType.FIBONACCI
+        MessageType.POW -> MessageProto.EType.POW
+        MessageType.BUBBLE_SORT -> MessageProto.EType.BUBBLE_SORT_UINT64
+        MessageType.STOP -> MessageProto.EType.STOP
     }
 }

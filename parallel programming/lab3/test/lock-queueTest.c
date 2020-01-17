@@ -5,7 +5,7 @@
 #include "lock-queueTest.h"
 #include <assert.h>
 #include <malloc.h>
-#include "../message.h"
+#include "../message-manager.h"
 #include "../lock-queue.h"
 
 LockQueue *createTestLockQueue() {

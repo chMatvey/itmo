@@ -11,7 +11,7 @@ open class Main {
                 error("Arguments must be: -mode -param1 - param2")
             }
 
-            val distribution = when(args[0]) {
+            val distribution = when (args[0]) {
                 "-uniform" -> Distribution.UNIFORM
                 "-exponential" -> Distribution.EXPONENTIAL
                 "-normal" -> Distribution.NORMAL
@@ -26,7 +26,7 @@ open class Main {
             }
 
             val generator = Generator()
-            val sender = Sender(generator, distribution, param1, param2);
+            val sender = Sender(generator, distribution, param1, param2)
 
             sender.run()
         }

@@ -3,51 +3,63 @@
 //
 
 #include "handler.h"
-#include <stdio.h>
 #include <malloc.h>
 #include <string.h>
 #include <unistd.h>
-#include <asm/errno.h>
 #include <fcntl.h>
-#include "message.h"
+#include "message-manager.h"
 #include "timer.h"
+#include "client-handler.h"
+#include "mongoose.h"
 #include <pthread.h>
+#include <asm/errno.h>
 
 const int buffer_size = 1024 * 1024;
 
-void thread_strategy() {
-    char *string = calloc(buffer_size, sizeof(char));
+int thread_strategy() {
     int wasStopMsg = 0;
 
     while (!wasStopMsg) {
-        struct timespec *start = getTime();
-        fgets(string, buffer_size, stdin);
-        printf("%s\n", string);
-        TMessage *msg = (TMessage *) malloc(sizeof(TMessage));
-        *msg = createMessage(string);
-        struct timespec *finish = getTime();
+        struct mg_mgr mgr;
+        struct mg_connection *nc;
 
-        addTime(readTimes, *start, *finish);
+        mg_mgr_init(&mgr, NULL);
+        nc = mg_connect(&mgr, "tcp://127.0.0.1:27015", client_handler);
+        if (nc != NULL) {
+            for (;;) {
+                struct timespec *start = getTime();
+                mg_mgr_poll(&mgr, 1000000000);
+                TMessage *msg = nc->user_data;
+                if (msg == NULL) {
+                    continue;
+                } else {
+                    struct timespec *finish = getTime();
+                    addTime(readTimes, *start, *finish);
+                    free(start);
+                    free(finish);
 
-        free(start);
-        free(finish);
-
-        if (msg->type == STOP) {
-            wasStopMsg = 1;
-            addItem(lockQueue, msg);
+                    if (msg->type == STOP) {
+                        wasStopMsg = 1;
+                        addItem(lockQueue, msg);
+                    } else {
+                        pthread_t tid;
+                        pthread_attr_t attr;
+                        pthread_attr_init(&attr);
+                        pthread_create(&tid, &attr, per_thread, msg);
+                        pthread_join(tid, NULL);
+                    }
+                    break;
+                }
+            }
         } else {
-            pthread_t tid;
-            pthread_attr_t attr;
-            pthread_attr_init(&attr);
-            pthread_create(&tid, &attr, per_thread, msg);
-            pthread_join(tid, NULL);
+            exit(1);
         }
     }
 
-    free(string);
+    return 0;
 }
 
-void task_strategy() {
+int task_strategy() {
     fibonacciLockQueue = createLockQueue();
     powLockQueue = createLockQueue();
     sortLockQueue = createLockQueue();
@@ -68,7 +80,7 @@ void task_strategy() {
     pthread_create(&tidPow, &attrPow, per_task_pow, NULL);
     pthread_create(&tidSort, &attrSort, per_task_sort, NULL);
 
-    char *string = calloc(buffer_size, sizeof(char));
+    char *string = (char *) calloc(buffer_size, sizeof(char));
     int wasStopMsg = 0;
 
     while (!wasStopMsg) {
@@ -115,12 +127,14 @@ void task_strategy() {
     destroyQueue(powLockQueue);
     destroyQueue(sortLockQueue);
     free(string);
+
+    return 0;
 }
 
-void pool_strategy(long countThreads) {
+int pool_strategy(long countThreads) {
     ThreadPool *pool = createThreadPool(countThreads);
 
-    char *string = calloc(buffer_size, sizeof(char));
+    char *string = (char *) calloc(buffer_size, sizeof(char));
     int wasStopMsg = 0;
 
     while (!wasStopMsg) {
@@ -147,6 +161,8 @@ void pool_strategy(long countThreads) {
     }
 
     free(string);
+
+    return 0;
 }
 
 void *reader_thread(void *param) {
@@ -154,16 +170,20 @@ void *reader_thread(void *param) {
 
     printf("%u", threadParam->strategyType);
     printf("%ld", threadParam->data);
+    int result = -1;
 
     if (threadParam->strategyType == PER_THREAD) {
-        thread_strategy();
+        result = thread_strategy();
     } else if (threadParam->strategyType == PER_TASK) {
-        task_strategy();
+        result = task_strategy();
     } else if (threadParam->strategyType == THREAD_POOL) {
-        pool_strategy(threadParam->data);
-    } else {
-        TMessage msg = createStop();
-        addItem(lockQueue, &msg);
+        result = pool_strategy(threadParam->data);
+    }
+
+    if (result < 0) {
+        TMessage *msg = (TMessage *) malloc(sizeof(TMessage));
+        *msg = createStop();
+        addItem(lockQueue, msg);
     }
 
     pthread_exit(0);

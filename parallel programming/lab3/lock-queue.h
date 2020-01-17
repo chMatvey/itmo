@@ -12,7 +12,7 @@
 #pragma once
 
 #include <pthread.h>
-#include "message.h"
+#include "message-manager.h"
 
 struct LockItem {
     TMessage *message;
