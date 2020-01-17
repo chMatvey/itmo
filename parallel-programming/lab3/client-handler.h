@@ -12,6 +12,6 @@
 
 #pragma once
 
-TMessage *readProtoMessage();
+TMessage createMessageByProto(EType type, uint64_t size, uint8_t *data);
 
 void client_handler(struct mg_connection *conn, int ev, void *p);

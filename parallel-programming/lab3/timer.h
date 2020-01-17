@@ -22,7 +22,6 @@ typedef struct {
     uint64_t count;
     struct Item *first;
     pthread_mutex_t mutex;
-//    long *array;
 } TimeQueue;
 
 TimeQueue *readTimes;

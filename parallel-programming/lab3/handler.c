@@ -11,10 +11,9 @@
 #include "timer.h"
 #include "client-handler.h"
 #include "mongoose.h"
+#include "flags.h"
 #include <pthread.h>
 #include <asm/errno.h>
-
-const int buffer_size = 1024 * 1024;
 
 int thread_strategy() {
     int wasStopMsg = 0;
@@ -22,17 +21,18 @@ int thread_strategy() {
     while (!wasStopMsg) {
         struct mg_mgr mgr;
         struct mg_connection *nc;
-
         mg_mgr_init(&mgr, NULL);
         nc = mg_connect(&mgr, "tcp://127.0.0.1:27015", client_handler);
+
         if (nc != NULL) {
+            printf("Getting message...\n");
             for (;;) {
                 struct timespec *start = getTime();
-                mg_mgr_poll(&mgr, 1000000000);
-                TMessage *msg = nc->user_data;
-                if (msg == NULL) {
+                mg_mgr_poll(&mgr, 1000);
+                if (getFlag() == 0) {
                     continue;
                 } else {
+                    TMessage *msg = getMsg();
                     struct timespec *finish = getTime();
                     addTime(readTimes, *start, *finish);
                     free(start);
@@ -48,12 +48,15 @@ int thread_strategy() {
                         pthread_create(&tid, &attr, per_thread, msg);
                         pthread_join(tid, NULL);
                     }
+
                     break;
                 }
             }
         } else {
-            exit(1);
+            return 1;
         }
+
+        setFlag();
     }
 
     return 0;
@@ -80,43 +83,58 @@ int task_strategy() {
     pthread_create(&tidPow, &attrPow, per_task_pow, NULL);
     pthread_create(&tidSort, &attrSort, per_task_sort, NULL);
 
-    char *string = (char *) calloc(buffer_size, sizeof(char));
     int wasStopMsg = 0;
 
     while (!wasStopMsg) {
-        struct timespec *start = getTime();
-        fgets(string, buffer_size, stdin);
-        printf("%s\n", string);
-        TMessage *msg = (TMessage *) malloc(sizeof(TMessage));
-        *msg = createMessage(string);
-        struct timespec *finish = getTime();
+        struct mg_mgr mgr;
+        struct mg_connection *nc;
+        mg_mgr_init(&mgr, NULL);
+        nc = mg_connect(&mgr, "tcp://127.0.0.1:27015", client_handler);
 
-        addTime(readTimes, *start, *finish);
+        if (nc != NULL) {
+            printf("Getting message...\n");
+            for (;;) {
+                struct timespec *start = getTime();
+                mg_mgr_poll(&mgr, 1000);
+                if (getFlag() == 0) {
+                    continue;
+                } else {
+                    TMessage *msg = getMsg();
+                    struct timespec *finish = getTime();
+                    addTime(readTimes, *start, *finish);
+                    free(start);
+                    free(finish);
 
-        if (msg->type == FIBONACCI) {
-            addItem(fibonacciLockQueue, msg);
-        } else if (msg->type == POW) {
-            addItem(powLockQueue, msg);
-        } else if (msg->type == BUBBLE_SORT_UINT64) {
-            addItem(sortLockQueue, msg);
+                    if (msg->type == FIBONACCI) {
+                        addItem(fibonacciLockQueue, msg);
+                    } else if (msg->type == POW) {
+                        addItem(powLockQueue, msg);
+                    } else if (msg->type == BUBBLE_SORT_UINT64) {
+                        addItem(sortLockQueue, msg);
+                    } else {
+                        wasStopMsg = 1;
+                        TMessage *stopFibonacci = (TMessage *) malloc(sizeof(TMessage));
+                        TMessage *stopPow = (TMessage *) malloc(sizeof(TMessage));
+                        TMessage *stopSort = (TMessage *) malloc(sizeof(TMessage));
+
+                        *stopFibonacci = createStop();
+                        *stopPow = createStop();
+                        *stopSort = createStop();
+
+                        addItem(fibonacciLockQueue, stopFibonacci);
+                        addItem(powLockQueue, stopPow);
+                        addItem(sortLockQueue, stopSort);
+                        addItem(lockQueue, msg);
+                    }
+
+                    break;
+                }
+            }
         } else {
-            wasStopMsg = 1;
-            TMessage *stopFibonacci = (TMessage *) malloc(sizeof(TMessage));
-            TMessage *stopPow = (TMessage *) malloc(sizeof(TMessage));
-            TMessage *stopSort = (TMessage *) malloc(sizeof(TMessage));
-
-            *stopFibonacci = createStop();
-            *stopPow = createStop();
-            *stopSort = createStop();
-
-            addItem(fibonacciLockQueue, stopFibonacci);
-            addItem(powLockQueue, stopPow);
-            addItem(sortLockQueue, stopSort);
-            addItem(lockQueue, msg);
+            return 1;
         }
 
-        free(start);
-        free(finish);
+        setFlag();
     }
 
     pthread_join(tidFibonacci, NULL);
@@ -126,7 +144,6 @@ int task_strategy() {
     destroyQueue(fibonacciLockQueue);
     destroyQueue(powLockQueue);
     destroyQueue(sortLockQueue);
-    free(string);
 
     return 0;
 }
@@ -134,42 +151,51 @@ int task_strategy() {
 int pool_strategy(long countThreads) {
     ThreadPool *pool = createThreadPool(countThreads);
 
-    char *string = (char *) calloc(buffer_size, sizeof(char));
     int wasStopMsg = 0;
 
     while (!wasStopMsg) {
-        struct timespec *start = getTime();
-        fgets(string, buffer_size, stdin);
-        printf("%s\n", string);
-        TMessage *msg = (TMessage *) malloc(sizeof(TMessage));
-        *msg = createMessage(string);
-        struct timespec *finish = getTime();
+        struct mg_mgr mgr;
+        struct mg_connection *nc;
+        mg_mgr_init(&mgr, NULL);
+        nc = mg_connect(&mgr, "tcp://127.0.0.1:27015", client_handler);
 
-        addTime(readTimes, *start, *finish);
+        if (nc != NULL) {
+            printf("Getting message...\n");
+            for (;;) {
+                struct timespec *start = getTime();
+                mg_mgr_poll(&mgr, 1000);
+                if (getFlag() == 0) {
+                    continue;
+                } else {
+                    TMessage *msg = getMsg();
+                    struct timespec *finish = getTime();
+                    addTime(readTimes, *start, *finish);
+                    free(start);
+                    free(finish);
 
-        free(start);
-        free(finish);
+                    if (msg->type == STOP) {
+                        wasStopMsg = 1;
+                        destroyThreadPool(pool);
+                        addItem(lockQueue, msg);
+                    } else {
+                        addItem(pool->taskQueue, msg);
+                    }
 
-        if (msg->type == STOP) {
-            wasStopMsg = 1;
-            destroyThreadPool(pool);
-            addItem(lockQueue, msg);
+                    break;
+                }
+            }
         } else {
-            addItem(pool->taskQueue, msg);
-            //addItem(taskQueue, msg);
+            return 1;
         }
-    }
 
-    free(string);
+        setFlag();
+    }
 
     return 0;
 }
 
 void *reader_thread(void *param) {
     ThreadParam *threadParam = (ThreadParam *) param;
-
-    printf("%u", threadParam->strategyType);
-    printf("%ld", threadParam->data);
     int result = -1;
 
     if (threadParam->strategyType == PER_THREAD) {
