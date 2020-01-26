@@ -41,9 +41,9 @@ int thread_strategy() {
                     if (msg == NULL) {
                         msg = (TMessage *) malloc(sizeof(TMessage));
                         *msg = createStop();
-                        wasStopMsg = 1;
-                        addItem(lockQueue, msg);
-                    } else if (msg->type == STOP) {
+                    }
+
+                    if (msg->type == STOP) {
                         wasStopMsg = 1;
                         addItem(lockQueue, msg);
                     } else {
@@ -61,8 +61,8 @@ int thread_strategy() {
             return 1;
         }
 
-        mg_mgr_free(&mgr);
         setFlag();
+        //mg_mgr_free(&mgr);
     }
 
     return 0;
@@ -111,12 +111,12 @@ int task_strategy() {
                     free(start);
                     free(finish);
 
-                    if (msg == NULL || msg->type == STOP) {
-                        if (msg == NULL) {
-                            msg = (TMessage *) malloc(sizeof(TMessage));
-                            *msg = createStop();
-                        }
+                    if (msg == NULL) {
+                        msg = (TMessage *) malloc(sizeof(TMessage));
+                        *msg = createStop();
+                    }
 
+                    if (msg->type == STOP) {
                         wasStopMsg = 1;
                         TMessage *stopFibonacci = (TMessage *) malloc(sizeof(TMessage));
                         TMessage *stopPow = (TMessage *) malloc(sizeof(TMessage));
@@ -131,11 +131,11 @@ int task_strategy() {
                         addItem(sortLockQueue, stopSort);
                         addItem(lockQueue, msg);
                     } else if (msg->type == FIBONACCI) {
-                        addItem(fibonacciLockQueue, msg);
+                        addItemWidthTimer(fibonacciLockQueue, msg);
                     } else if (msg->type == POW) {
-                        addItem(powLockQueue, msg);
+                        addItemWidthTimer(powLockQueue, msg);
                     } else if (msg->type == BUBBLE_SORT_UINT64) {
-                        addItem(sortLockQueue, msg);
+                        addItemWidthTimer(sortLockQueue, msg);
                     }
 
                     break;
@@ -145,7 +145,7 @@ int task_strategy() {
             return 1;
         }
 
-        mg_mgr_free(&mgr);
+        //mg_mgr_free(&mgr);
         setFlag();
     }
 
@@ -188,14 +188,14 @@ int pool_strategy(long countThreads) {
                     if (msg == NULL) {
                         msg = (TMessage *) malloc(sizeof(TMessage));
                         *msg = createStop();
-                        wasStopMsg = 1;
-                        addItem(lockQueue, msg);
-                    } else if (msg->type == STOP) {
+                    }
+
+                    if (msg->type == STOP) {
                         wasStopMsg = 1;
                         destroyThreadPool(pool);
                         addItem(lockQueue, msg);
                     } else {
-                        addItem(pool->taskQueue, msg);
+                        addItemWidthTimer(pool->taskQueue, msg);
                     }
 
                     break;
@@ -205,7 +205,7 @@ int pool_strategy(long countThreads) {
             return 1;
         }
 
-        mg_mgr_free(&mgr);
+        //mg_mgr_free(&mgr);
         setFlag();
     }
 
@@ -269,27 +269,32 @@ void *per_thread(void *param) {
     TMessage *message = (TMessage *) param;
 
     struct timespec *start = getTime();
+    struct timespec *finish;
     switch (message->type) {
         case FIBONACCI: {
             fibonacci(message->data[0]);
+            finish = getTime();
+            addTime(executionTimesF, *start, *finish);
             break;
         }
         case POW: {
             power(message->data[0], message->data[1]);
+            finish = getTime();
+            addTime(executionTimesP, *start, *finish);
             break;
         }
         case BUBBLE_SORT_UINT64: {
             bubbleSort(message->data, message->size);
+            finish = getTime();
+            addTime(executionTimesS, *start, *finish);
             break;
         }
         default: {
             break;
         }
     }
-    struct timespec *finish = getTime();
 
     addItem(lockQueue, message);
-    addTime(executionTimes, *start, *finish);
 
     free(start);
     free(finish);
@@ -310,10 +315,8 @@ void *per_task_fibonacci(void *param) {
             struct timespec *start = getTime();
             fibonacci(message->data[0]);
             struct timespec *finish = getTime();
-
+            addTime(executionTimesF, *start, *finish);
             addItem(lockQueue, message);
-            addTime(executionTimes, *start, *finish);
-
             free(start);
             free(finish);
         }
@@ -335,10 +338,8 @@ void *per_task_pow(void *param) {
             struct timespec *start = getTime();
             power(message->data[0], message->data[1]);
             struct timespec *finish = getTime();
-
+            addTime(executionTimesF, *start, *finish);
             addItem(lockQueue, message);
-            addTime(executionTimes, *start, *finish);
-
             free(start);
             free(finish);
         }
@@ -360,10 +361,8 @@ void *per_task_sort(void *param) {
             struct timespec *start = getTime();
             bubbleSort(message->data, message->size);
             struct timespec *finish = getTime();
-
+            addTime(executionTimesS, *start, *finish);
             addItem(lockQueue, message);
-            addTime(executionTimes, *start, *finish);
-
             free(start);
             free(finish);
         }
@@ -422,17 +421,30 @@ void *per_pool(void *param) {
 
         if (message->type == STOP) {
             wasStopMsg = 1;
-        } else {
+        } else if (message->type == FIBONACCI) {
             struct timespec *start = getTime();
             fibonacci(message->data[0]);
             struct timespec *finish = getTime();
-
-            addItem(lockQueue, message);
-            addTime(executionTimes, *start, *finish);
-
+            addTime(executionTimesF, *start, *finish);
+            free(start);
+            free(finish);
+        } else if (message->type == POW) {
+            struct timespec *start = getTime();
+            pow(message->data[0], message->data[1]);
+            struct timespec *finish = getTime();
+            addTime(executionTimesP, *start, *finish);
+            free(start);
+            free(finish);
+        } else if (message->type == BUBBLE_SORT_UINT64) {
+            struct timespec *start = getTime();
+            bubbleSort(message->data, message->size);
+            struct timespec *finish = getTime();
+            addTime(executionTimesS, *start, *finish);
             free(start);
             free(finish);
         }
+
+        addItem(lockQueue, message);
 
         if (getCount(pool->taskQueue) == 0) {
             pthread_cond_signal(&pool->nonTasks);

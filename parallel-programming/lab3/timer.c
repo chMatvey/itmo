@@ -63,6 +63,7 @@ void printTimesToFile(TimeQueue queue, int fileDescriptor) {
 
         printToFile(str, fileDescriptor);
         printToFile(",", fileDescriptor);
+        printToFile("\n", fileDescriptor);
     }
 
     free(array);

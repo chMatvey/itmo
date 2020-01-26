@@ -20,12 +20,13 @@ class Sender(
         val serverSocketChannel = ServerSocketChannel.open()
         serverSocketChannel.bind(InetSocketAddress(InetAddress.getByName("127.0.0.1"), 27015))
 
-        val messageCount = generateNumber()
+        //val messageCount = generateNumber()
+        val messageCount = 500;
 
         for (i in 0..messageCount) {
             println("Waiting for client...")
             val client = serverSocketChannel.accept()
-            Thread.sleep(generator.normal(0.0, 200.0).toLong())
+            Thread.sleep((generateNumber() / param2 * 100).toLong())
             val responseMsg = generateMsg();
             val byteBuffer = ByteBuffer.allocate(1024 * 1024)
 
@@ -55,29 +56,26 @@ class Sender(
 
     private fun generateMsg(): MessageProto.TMessage {
         val builder = newBuilder()
-//        var number = generateNumber() and 3
-//        while (number == 0) {
-//            number = generateNumber() and 3
-//        }
-//        var size = 0L
-//        when (number) {
-//            1 -> {
-//                builder.type = MessageProto.EType.FIBONACCI
-//                size = 1
-//            }
-//            2 -> {
-//                builder.type = MessageProto.EType.POW
-//                size = 2
-//            }
-//            3 -> {
-//                builder.type = MessageProto.EType.BUBBLE_SORT_UINT64
-//                size = generateNumber().toLong()
-//            }
-//            else -> error("Error, something went wrong")
-//        }
-        builder.type = MessageProto.EType.BUBBLE_SORT_UINT64
-        builder.size = 900
-        for (i in 0 until 900) {
+        val number = generator.uniform(1.0, 4.0).toInt()
+
+        var size = 0L
+        when (number) {
+            1 -> {
+                builder.type = MessageProto.EType.FIBONACCI
+                size = 1
+            }
+            2 -> {
+                builder.type = MessageProto.EType.POW
+                size = 2
+            }
+            3 -> {
+                builder.type = MessageProto.EType.BUBBLE_SORT_UINT64
+                size = generateNumber().toLong()
+            }
+            else -> error("Error, something went wrong")
+        }
+        builder.size = size;
+        for (i in 0 until size) {
             builder.addData(generateNumber())
         }
 

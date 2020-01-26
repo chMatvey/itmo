@@ -20,6 +20,22 @@ void addItem(LockQueue *queue, TMessage *message) {
     struct LockItem *item = (struct LockItem *) malloc(sizeof(struct LockItem));
     item->message = message;
 
+    pthread_mutex_lock(&queue->mutex);
+
+    if (queue->count == 0) {
+        pthread_cond_signal(&queue->count_nonzero);
+    }
+    queue->count++;
+    item->next = queue->first;
+    queue->first = item;
+
+    pthread_mutex_unlock(&queue->mutex);
+}
+
+void addItemWidthTimer(LockQueue *queue, TMessage *message) {
+    struct LockItem *item = (struct LockItem *) malloc(sizeof(struct LockItem));
+    item->message = message;
+
     struct timespec *start = getTime();
 
     pthread_mutex_lock(&queue->mutex);

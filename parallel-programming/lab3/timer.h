@@ -26,7 +26,9 @@ typedef struct {
 
 TimeQueue *readTimes;
 TimeQueue *inQueueTimes;
-TimeQueue *executionTimes;
+TimeQueue *executionTimesF;
+TimeQueue *executionTimesP;
+TimeQueue *executionTimesS;
 TimeQueue *writeTimes;
 
 TimeQueue *createTimeQueue();

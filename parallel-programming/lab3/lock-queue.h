@@ -38,6 +38,8 @@ LockQueue *createLockQueue();
 
 void addItem(LockQueue *queue, TMessage *message);
 
+void addItemWidthTimer(LockQueue *queue, TMessage *message);
+
 TMessage *getItem(LockQueue *queue);
 
 uint64_t getCount(LockQueue *queue);

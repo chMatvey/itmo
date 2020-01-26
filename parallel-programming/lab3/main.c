@@ -41,7 +41,9 @@ int main(int argc, char *argv[]) {
     lockQueue = createLockQueue();
     readTimes = createTimeQueue();
     inQueueTimes = createTimeQueue();
-    executionTimes = createTimeQueue();
+    executionTimesF = createTimeQueue();
+    executionTimesP = createTimeQueue();
+    executionTimesS = createTimeQueue();
     writeTimes = createTimeQueue();
 
     if (strcmp(argv[1], "test") == 0) {
@@ -96,17 +98,23 @@ int main(int argc, char *argv[]) {
 
             int readTimesFile = open("../read", O_WRONLY | O_CREAT, 00700);
             int inQueueFile = open("../queue", O_WRONLY | O_CREAT, 00700);
-            int executionTimesFile = open("../execution", O_WRONLY | O_CREAT, 00700);
+            int executionTimesFileF = open("../executionF", O_WRONLY | O_CREAT, 00700);
+            int executionTimesFileP = open("../executionP", O_WRONLY | O_CREAT, 00700);
+            int executionTimesFileS = open("../executionS", O_WRONLY | O_CREAT, 00700);
             int writeTimesFIle = open("../writte", O_WRONLY | O_CREAT, 00700);
 
             printTimesToFile(*readTimes, readTimesFile);
             printTimesToFile(*inQueueTimes, inQueueFile);
-            printTimesToFile(*executionTimes, executionTimesFile);
+            printTimesToFile(*executionTimesF, executionTimesFileF);
+            printTimesToFile(*executionTimesP, executionTimesFileP);
+            printTimesToFile(*executionTimesS, executionTimesFileS);
             printTimesToFile(*writeTimes, writeTimesFIle);
 
             close(readTimesFile);
             close(inQueueFile);
-            close(executionTimesFile);
+            close(executionTimesFileF);
+            close(executionTimesFileP);
+            close(executionTimesFileS);
             close(writeTimesFIle);
         }
 
@@ -116,6 +124,8 @@ int main(int argc, char *argv[]) {
     destroyQueue(lockQueue);
     destroyTimeQueue(readTimes);
     destroyTimeQueue(inQueueTimes);
-    destroyTimeQueue(executionTimes);
+    destroyTimeQueue(executionTimesF);
+    destroyTimeQueue(executionTimesP);
+    destroyTimeQueue(executionTimesS);
     destroyTimeQueue(writeTimes);
 }

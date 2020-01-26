@@ -4,6 +4,8 @@ project(lab3)
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS -pthread)
 set(CMAKE_C_FLAGS -pthread)
+set(CMAKE_C_FLAGS --coverage)
+set(CMAKE_CXX_FLAGS --coverage)
 
 INCLUDE(FindProtobuf)
 FIND_PACKAGE(Protobuf REQUIRED)

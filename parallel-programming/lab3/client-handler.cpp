@@ -35,8 +35,10 @@ extern "C" void client_handler(struct mg_connection *conn, int ev, void *p) {
                 eType = POW;
             } else if (receivedMsg.type() == lab3::BUBBLE_SORT_UINT64) {
                 eType = BUBBLE_SORT_UINT64;
-            } else {
+            } else if (receivedMsg.type() == lab3::STOP) {
                 eType = STOP;
+            } else {
+                eType = BUBBLE_SORT_UINT64;
             }
             uint64_t size = receivedMsg.size();
             auto *data = (uint8_t *) calloc(size, sizeof(uint8_t));
@@ -48,8 +50,9 @@ extern "C" void client_handler(struct mg_connection *conn, int ev, void *p) {
         for (uint64_t i = msg->size; i < msg->size + receivedMsg.data_size(); i++) {
             msg->data[i] = receivedMsg.data(i - msg->size);
         }
+        msg->size += receivedMsg.data_size();
 
-        receivedMsg.Clear();
+        //receivedMsg.Clear();
     } else if (ev == MG_EV_CLOSE) {
         setMsg((TMessage *) conn->user_data);
         dropFlag();
