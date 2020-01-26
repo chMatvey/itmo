@@ -30,8 +30,8 @@ message.o: proto/message.pb.cc
 flags.o: flags.cpp
 	g++ -c flags.cpp
 
-mongoose.o: mongoose.c
-	gcc -c mongoose.c
+mongoose.o: mongoose/mongoose.c
+	gcc -c mongoose/mongoose.c
 
 handlerTest.o: test/handlerTest.c
 	gcc -c test/handlerTest.c
