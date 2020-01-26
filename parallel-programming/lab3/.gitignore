@@ -3,6 +3,7 @@ cJSON
 report
 protobuf
 protobuf_simply
+mongoose
 
 *.jar
 *.o

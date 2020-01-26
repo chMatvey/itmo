@@ -10,7 +10,7 @@
 #include "message-manager.h"
 #include "timer.h"
 #include "client-handler.h"
-#include "mongoose.h"
+#include "mongoose/mongoose.h"
 #include "flags.h"
 #include <pthread.h>
 #include <asm/errno.h>

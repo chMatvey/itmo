@@ -8,6 +8,10 @@ install protobuf: https://github.com/protocolbuffers/protobuf
 
 build jar-file from https://github.com/chMatvey/itmo/tree/master/osp/random-number-generator
 
+install  mongoose
+       
+    git clone https://github.com/cesanta/mongoose.git
+
 ### build:
 
     make

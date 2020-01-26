@@ -37,8 +37,11 @@ add_executable(
         file-manager.c
         client-handler.cpp
         client-handler.h
-        mongoose.c
-        mongoose.h queue.h flags.h flags.cpp)
+        mongoose/mongoose.c
+        mongoose/mongoose.h
+        queue.h
+        flags.h
+        flags.cpp)
 
 target_link_libraries(lab3 proto3 ${PROTOBUF_LIBRARY})
 target_link_libraries(lab3 ${PTHREAD_LIBRARY})

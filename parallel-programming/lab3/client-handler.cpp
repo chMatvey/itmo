@@ -4,7 +4,7 @@
 
 #include "message-manager.h"
 #include "proto/message.pb.h"
-#include "mongoose.h"
+#include "mongoose/mongoose.h"
 #include "handler.h"
 #include "flags.h"
 
