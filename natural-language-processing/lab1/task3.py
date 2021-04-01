@@ -14,7 +14,7 @@ with io.open('word2lemma.dat', encoding='utf-8') as f:
         result = morphAnalyzer.parse(morph)
         parsedLemma = lemma.lower()
         matches = list(
-            filter(lambda r: r.normal_form == parsedLemma, result)
+            filter(lambda r: r.normal_form.replace('ё', 'e') == parsedLemma, result)
         )
 
         if len(matches) == 0:
