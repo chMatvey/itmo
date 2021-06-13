@@ -8,13 +8,7 @@ import numpy as np
 import cv2
 import os
 from sklearn.metrics import f1_score
-
-
-def extract_histogram(image, bins=(8, 8, 8)):
-    hist = cv2.calcHist([image], [0, 1, 2], None, bins, [0, 256, 0, 256, 0, 256])
-    cv2.normalize(hist, hist)
-    return hist.flatten()
-
+from extract_histogram import extract_histogram
 
 imagePaths = sorted(list(paths.list_images('data/train')))
 data = []
